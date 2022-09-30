@@ -1,10 +1,18 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { router } from './routes/routes';
+import { router } from './routes';
 dotenv.config();
 const app = express();
 let user_token;
+function checkToken(req, res, next) {
+    if (user_token === undefined) {
+        res.render('Cannot excute query: Token is needed.');
+    }
+    else {
+        next();
+    }
+}
 app.use("/router", router);
 app.listen(process.env.PORT, function () {
     console.log("listening to 8080");
@@ -44,7 +52,7 @@ app.get('/oauth2callback', function (req, res) {
         }).then(function (response) {
             user_token = response.data.access_token;
             console.log(user_token);
-            res.send(user_token);
+            res.redirect('/');
         }).catch(function (error) {
             console.log(error);
         });
@@ -52,4 +60,22 @@ app.get('/oauth2callback', function (req, res) {
     else {
         res.send('query got no known parameters');
     }
+});
+app.get('/get-liked', checkToken, function (req, res) {
+    axios.get('https://www.googleapis.com/youtube/v3/videos', {
+        params: {
+            part: 'snippet',
+            myRating: 'like',
+            maxResults: 25
+        },
+        headers: {
+            Authorization: `Bearer ${user_token}`
+        }
+    }).then(function (response) {
+        console.log(response.data.items);
+        res.send('좋아요한 동영상 데이터 불러오기 완료.');
+    }).catch(function (error) {
+        console.log(error);
+        res.send('Error occurred: ' + error);
+    });
 });

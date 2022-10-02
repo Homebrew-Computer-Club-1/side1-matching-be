@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { checkToken, user_token } from '../routes/google';
+import { checkToken, user_token } from '../passport/googleStrategy';
 import axios from 'axios';
 export const youtubeRouter = Router();
 youtubeRouter.get('/get-liked', checkToken, function (req, res) {

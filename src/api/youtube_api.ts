@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import { checkToken, user_token } from './google';
+import { checkToken, user_token } from '../passport/googleStrategy';
 import axios from 'axios';
 
 export const youtubeRouter: Router = Router();

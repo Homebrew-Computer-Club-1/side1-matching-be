@@ -31,8 +31,8 @@ export function google(){
                 callbackURL: `http://localhost:${process.env.PORT}/auth/google/callback`,
             },
             function(accessToken, refreshToken, profile, done) {
-                console.log('여기 결과 : ', accessToken, refreshToken);
                 user_token = accessToken;
+                done(null, profile);
                 // db.query('SELECT * FROM users WHERE userId = ?',[profile._json.email],function(err,user){
                 //     if (!user[0]){
                 //         db.query('INSERT INTO users (userId,userPw) VALUES(?,?)',[profile._json.email,1234],function(err,result){

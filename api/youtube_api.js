@@ -20,3 +20,21 @@ youtubeRouter.get('/get-liked', checkToken, function (req, res) {
         res.send('Error occurred: ' + error);
     });
 });
+youtubeRouter.get('/get-subscription', checkToken, function (req, res) {
+    axios.get('https://www.googleapis.com/youtube/v3/subscriptions', {
+        params: {
+            part: 'snippet',
+            mine: true,
+            maxResults: 25
+        },
+        headers: {
+            Authorization: `Bearer ${user_token}`
+        }
+    }).then(function (response) {
+        console.log(response.data.items);
+        res.send('구독 데이터 불러오기 완료.');
+    }).catch(function (error) {
+        console.log(error);
+        res.send('Error occurred: ' + error);
+    });
+});

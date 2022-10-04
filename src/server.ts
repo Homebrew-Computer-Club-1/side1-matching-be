@@ -1,18 +1,31 @@
 import express from 'express';
+import passport from 'passport';
+import session from 'express-session';
 import * as bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import axios, {AxiosResponse} from 'axios';
-import {router} from './routes';
-import {googleRouter} from './google';
-import {youtubeRouter} from './youtube_api';
+import {googleRouter} from './routes/google';
+import {youtubeRouter} from './api/youtube_api';
+import passportConfig from './passport';
 
 dotenv.config();
 
+passportConfig();
+
 const app = express();
 
-app.use("/router", router);
-app.use("/google", googleRouter);
-app.use("/youtube-api", youtubeRouter);
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true }
+  }))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use("/auth/google", googleRouter);
+app.use("/youtube", youtubeRouter);
 
 app.listen(process.env.PORT, function(){
     console.log("listening to 8080");

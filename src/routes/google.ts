@@ -1,7 +1,9 @@
 import express from 'express';
 import {Router} from 'express';
 import passport from 'passport';
-import axios, {AxiosResponse} from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const googleRouter: Router = Router();
 
@@ -10,7 +12,6 @@ googleRouter.get('/', passport.authenticate('google', {
 }));
 
 googleRouter.get('/callback', passport.authenticate('google', {
-    successRedirect: '../../',
+    successRedirect: process.env.CLIENT_REDIRECT_URL,
     failureRedirect: '/login-fail'
 }));
-

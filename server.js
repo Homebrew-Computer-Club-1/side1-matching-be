@@ -26,6 +26,9 @@ app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
 app.use(cors());
 
+app.listen(process.env.PORT, function () {
+    console.log(`listening to ${process.env.PORT}`);
+});
 
 app.get('/', function (req, res) {
     res.send('home');

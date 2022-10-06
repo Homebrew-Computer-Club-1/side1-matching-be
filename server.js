@@ -8,6 +8,7 @@ import { googleRouter } from './routes/google';
 import { youtubeRouter } from './api/youtube_api';
 import passportConfig from './passport';
 import { connection } from './lib/mysql';
+import cors from "cors";
 dotenv.config();
 passportConfig();
 const app = express();
@@ -23,10 +24,9 @@ app.use(passport.session());
 app.use(bodyParser.json());
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
-app.listen(process.env.PORT, function () {
-    db.connect();
-    console.log(`listening to ${process.env.PORT}`);
-});
+app.use(cors());
+
+
 app.get('/', function (req, res) {
     res.send('home');
 });
@@ -44,14 +44,14 @@ app.get('/get-data', function (req, res) {
     });
     res.redirect('/');
 });
-app.get('/get-google-id', function (req, res) {
+app.get('/getGoogleId', function (req, res) {
     if (req.user != undefined) {
         console.log(req.user.id);
         res.json({ googleId: req.user.id });
     }
 });
 app.post('/insert-user-data', function (req, res) {
-    db.query(`INSERT INTO user_info VALUES(${req.body.googleId}, ${req.body.name}, ${req.body.age})`, function (error, results, fields) {
+    db.query(`INSERT INTO user_info(googleId,name,age) VALUES(?,?,?)`,[req.body.googleId, req.body.name, req.body.age] ,function (error, results, fields) {
         if (error)
             throw error;
         console.log('A new tuple inserted : (' + req.body.googleId + ', ' + req.body.name + ', ' + req.body.age);
@@ -64,4 +64,9 @@ app.post('/insert-user-data', function (req, res) {
             });
         });
     });
+});
+
+app.listen(process.env.PORT, function () {
+    db.connect();
+    console.log(`listening to ${process.env.PORT}`);
 });

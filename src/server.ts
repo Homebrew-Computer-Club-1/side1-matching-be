@@ -8,6 +8,7 @@ import {googleRouter} from './routes/google';
 import {youtubeRouter} from './api/youtube_api';
 import passportConfig from './passport';
 import {connection} from './lib/mysql'
+import cors from "cors";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use(bodyParser.json())
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
+app.use(cors());
 
 app.listen(process.env.PORT, function(){
     console.log(`listening to ${process.env.PORT}`);

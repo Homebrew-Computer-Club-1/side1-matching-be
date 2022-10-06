@@ -24,7 +24,6 @@ app.use(bodyParser.json());
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
 app.listen(process.env.PORT, function () {
-    db.connect();
     console.log(`listening to ${process.env.PORT}`);
 });
 app.get('/', function (req, res) {

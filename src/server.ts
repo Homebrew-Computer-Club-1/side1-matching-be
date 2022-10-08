@@ -18,7 +18,7 @@ dotenv.config();
 passportConfig();
 
 const app = express();
-let db:Connection;
+const db=connection;
 const mysqlStore = MySQLStore(expressSession);
 
 const session_options = {
@@ -38,8 +38,6 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-db = connection
-
 declare global {
     namespace Express{
         interface User{
@@ -47,8 +45,6 @@ declare global {
         }
     }
 }
-
-
 
 app.use(passport.initialize());
 app.use(passport.session());

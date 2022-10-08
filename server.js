@@ -14,7 +14,7 @@ import MySQLStore from 'express-mysql-session';
 dotenv.config();
 passportConfig();
 const app = express();
-let db;
+const db = connection;
 const mysqlStore = MySQLStore(expressSession);
 const session_options = {
     host: process.env.DB_HOST,
@@ -30,7 +30,6 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: false }
 }));
-db = connection;
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json());

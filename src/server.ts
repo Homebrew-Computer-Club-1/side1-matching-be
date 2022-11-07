@@ -11,7 +11,6 @@ import passportConfig from './passport';
 import {connection} from './lib/mysql'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
-import { Connection } from 'mysql';
 
 dotenv.config();
 

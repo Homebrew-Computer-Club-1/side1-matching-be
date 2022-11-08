@@ -14,11 +14,8 @@ export function checkToken(req, res, next) {
     }
 }
 export function google() {
-    if (process.env.CLIENT_ID == undefined) {
-        console.log('OAuth2.0 client id undefined');
-    }
-    else if (process.env.CLIENT_SECRET == undefined) {
-        console.log('OAuth2.0 client secret undefined');
+    if (process.env.CLIENT_ID == undefined || process.env.CLIENT_SECRET == undefined) {
+        console.log(`OAuth2.0 ${!process.env.CLIENT_SECRET ? "CLIENT_SECRET," : undefined} ${!process.env.CLEINT_ID ? "CLIENT_ID" : undefined} is undefined`);
     }
     else {
         passport.use(new GoogleStrategy({

@@ -12,7 +12,7 @@ import cors from "cors";
 dotenv.config();
 passportConfig();
 const app = express();
-const db = connection;
+export const db = connection;
 app.use(session({
     secret: 'keyboard cat',
     resave: false,
@@ -22,13 +22,10 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json());
+
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
-app.use(cors());
-
-app.listen(process.env.PORT, function () {
-    console.log(`listening to ${process.env.PORT}`);
-});
+app.use(cors({ origin: 'http://localhost:3000'}));
 
 app.get('/', function (req, res) {
     res.send('home');
@@ -47,27 +44,38 @@ app.get('/get-data', function (req, res) {
     });
     res.redirect('/');
 });
-app.get('/getGoogleId', function (req, res) {
+app.get('/get-googleId', function (req, res) {
     if (req.user != undefined) {
         console.log(req.user.id);
         res.json({ googleId: req.user.id });
     }
 });
-app.post('/insert-user-data', function (req, res) {
+app.post('/insert-userData', function (req, res) {
     db.query(`INSERT INTO user_info(googleId,name,age) VALUES(?,?,?)`,[req.body.googleId, req.body.name, req.body.age] ,function (error, results, fields) {
         if (error)
             throw error;
-        console.log('A new tuple inserted : (' + req.body.googleId + ', ' + req.body.name + ', ' + req.body.age);
-        db.query(`SELECT * FROM user_info`, function (error, results, fields) {
-            if (error)
-                throw error;
-            res.send({
-                allOtherUsers: results,
-                mlResult: ["123", "456"]
-            });
-        });
+        console.log(`A new tuple inserted : ( ${req.body.googleId}, ${req.body.name}, ${req.body.age})`);
+        res.status(200);
     });
 });
+
+app.get('/match',function(req,res){
+    db.query(`SELECT * FROM user_info`, function (error, results, fields) {
+        if (error)
+            throw error;
+        res.send({
+            allOtherUsers: results,
+            mlResult: ["123", "456"]
+        });
+    });
+})
+
+app.get('/get-currentUserData',function(req,res){
+    db.query(`SELECT * FROM user_info WHERE googleID=?`,[req.user?.id],function(err,result){
+        res.json(result[0])
+    })
+})
+
 
 app.listen(process.env.PORT, function () {
     db.connect();

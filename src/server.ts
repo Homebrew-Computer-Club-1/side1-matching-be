@@ -1,6 +1,7 @@
 import express from 'express';
 import passport from 'passport';
-import session from 'express-session';
+import session from 'express-session'
+import * as expressSession from 'express-session';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import axios, {AxiosResponse} from 'axios';
@@ -8,13 +9,33 @@ import {googleRouter} from './routes/google';
 import {youtubeRouter} from './api/youtube_api';
 import passportConfig from './passport';
 import {connection} from './lib/mysql'
+import cors from "cors";
+import MySQLStore from 'express-mysql-session';
 
 dotenv.config();
 
 passportConfig();
 
 const app = express();
-const db = connection;
+const db=connection;
+const mysqlStore = MySQLStore(expressSession);
+
+const session_options = {
+    host     : process.env.DB_HOST as string,
+    user     : process.env.DB_USER as string,
+    password : process.env.DB_PW as string,
+    database : process.env.DB_NAME as string
+}
+
+const sessionStore = new mysqlStore(session_options);
+
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    store: sessionStore,
+    saveUninitialized: true,
+    cookie: { secure: false }
+}));
 
 declare global {
     namespace Express{
@@ -24,19 +45,13 @@ declare global {
     }
 }
 
-app.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-}));
-
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json())
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
+app.use(cors());
 
 app.listen(process.env.PORT, function(){
     console.log(`listening to ${process.env.PORT}`);

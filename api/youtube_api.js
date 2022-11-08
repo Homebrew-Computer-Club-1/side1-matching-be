@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { checkToken, user_token } from '../passport/googleStrategy';
 import axios from 'axios';
+import { connection } from '../lib/mysql';
 export const youtubeRouter = Router();
+const db = connection;
 function filter_subscription(list) {
     let result = {
         subs_count: 0,
@@ -69,8 +71,39 @@ youtubeRouter.get('/get-subscription', checkToken, function (req, res) {
             }));
         }
         Promise.all(promises_list).then(() => {
-            res.send(JSON.stringify(result));
-            console.log(result);
+            if (req.user) {
+                db.query(`select EXISTS (select google_id from user_info where google_id=${req.user.id} limit 1) as success`, function (error, results, fields) {
+                    if (error)
+                        throw error;
+                    console.log(results);
+                    // youtube_data 테이블에 해당 사용자 데이터 없을 시,
+                    if (results[0].success == 0) {
+                        if (req.user) {
+                            db.query(`INSERT INTO youtube_data VALUES("${req.user.id}","","${JSON.stringify(result)}")`, function (error, results, fields) {
+                                if (error)
+                                    throw error;
+                                res.send("유저의 구독 정보 등록");
+                            });
+                        }
+                        // youtube_data 테이블에 해당 사용자 데이터 존재 시,
+                    }
+                    else {
+                        if (req.user) {
+                            db.query(`UPDATE youtube_data SET subs_data="${JSON.stringify(result)}" WHERE google_id="${req.user.id}"`, function (error, results, fields) {
+                                if (error)
+                                    throw error;
+                                res.send("유저의 구독 정보 업데이트");
+                            });
+                        }
+                    }
+                });
+                res.send(JSON.stringify(result));
+                console.log(result);
+            }
+            else {
+                res.send('로그인을 확인할 수 없습니다.');
+                console.log('req.user is undefined');
+            }
         });
         // res.send('구독 데이터 불러오기 완료.' + JSON.stringify(response.data.items[0].snippet.resourceId));
     }).catch(function (error) {

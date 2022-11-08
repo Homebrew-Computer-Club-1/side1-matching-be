@@ -12,7 +12,7 @@ import cors from "cors";
 dotenv.config();
 passportConfig();
 const app = express();
-const db = connection;
+export const db = connection;
 app.use(session({
     secret: 'keyboard cat',
     resave: false,

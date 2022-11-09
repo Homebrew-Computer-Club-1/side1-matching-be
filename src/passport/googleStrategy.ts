@@ -2,10 +2,8 @@ import express from "express";
 import dotenv from 'dotenv';
 import passport from "passport";
 import Google from "passport-google-oauth20";
-import {connection} from "../lib/mysql";
+import {db} from "../server";
 const GoogleStrategy = Google.Strategy;
-
-const db = connection;
 
 dotenv.config();
 
@@ -20,10 +18,8 @@ export function checkToken(req:express.Request, res:express.Response, next:expre
 }
 
 export function google(){
-    if(process.env.CLIENT_ID == undefined){
-        console.log('OAuth2.0 client id undefined');
-    }else if(process.env.CLIENT_SECRET == undefined){
-        console.log('OAuth2.0 client secret undefined');
+    if (process.env.CLIENT_ID == undefined || process.env.CLIENT_SECRET == undefined) {
+        console.log(`OAuth2.0 ${!process.env.CLIENT_SECRET ? "CLIENT_SECRET," : undefined} ${!process.env.CLEINT_ID ? "CLIENT_ID" : undefined} is undefined`);
     }else{
         passport.use(new GoogleStrategy(
             {
@@ -33,6 +29,7 @@ export function google(){
             },
             function(accessToken, refreshToken, profile, done) {
                 const user_id = profile.id;
+                user_token = accessToken;
                 console.log(profile.id);
                 // user_info에 google_id 존재 확인
                 db.query(`select EXISTS (select google_id from user_info where google_id=${user_id} limit 1) as success`, function (error, results, fields) {

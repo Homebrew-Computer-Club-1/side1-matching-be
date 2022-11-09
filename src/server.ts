@@ -17,7 +17,7 @@ dotenv.config();
 passportConfig();
 
 const app = express();
-const db=connection;
+export const db=connection;
 const mysqlStore = MySQLStore(expressSession);
 
 const session_options = {
@@ -51,11 +51,8 @@ app.use(bodyParser.json())
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
-app.use(cors());
-
-app.listen(process.env.PORT, function(){
-    console.log(`listening to ${process.env.PORT}`);
-});
+// app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000'}));
 
 app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
@@ -84,17 +81,47 @@ app.get('/get-google-id',function(req:express.Request, res:express.Response){
 })
 
 app.post('/insert-user-data', function(req,res){
-    db.query(`INSERT INTO user_info VALUES(${req.body.googleId}, ${req.body.name}, ${req.body.age})`, function (error, results, fields) {
+    // google_id 존재 여부 체크
+    db.query(`select EXISTS (select google_id from user_info where google_id=${req.body.googleId} limit 1) as success`, function (error, results, fields) {
         if (error)
             throw error;
-        console.log('A new tuple inserted : ('+ req.body.googleId + ', ' + req.body.name + ', ' + req.body.age);
-        db.query(`SELECT * FROM user_info`, function (error, results, fields) {
-            if (error)
-                throw error;
-            res.send({
-                allOtherUsers: results,
-                mlResult: ["123", "456"]
+        if(results[0].success==0){
+            // user_info에 사용자 새로 추가
+            db.query(`INSERT INTO user_info(googleId,name,age) VALUES(?,?,?)`,[req.body.googleId, req.body.name, req.body.age] ,function (error, results, fields) {
+                if (error)
+                    throw error;
+                console.log(`A new tuple inserted : ( ${req.body.googleId}, ${req.body.name}, ${req.body.age})`);
+                res.status(200);
             });
+        }else{
+            // user_info의 기존 사용자 정보 수정
+            db.query(`UPDATE user_info SET name=?, age=? WHERE google_id=?`, [req.body.name, req.body.age, req.body.googleId], function (error, results, fields) {
+                if (error)
+                    throw error;
+                res.status(200);
+            });
+        }
+    });
+});
+
+app.get('/match',function(req,res){
+    db.query(`SELECT * FROM user_info`, function (error, results, fields) {
+        if (error)
+            throw error;
+        res.send({
+            allOtherUsers: results,
+            mlResult: ["123", "456"]
         });
     });
+})
+
+app.get('/get-current-user-data',function(req,res){
+    db.query(`SELECT * FROM user_info WHERE google_id=?`,[req.user?.id],function(err,result){
+        res.json(result[0])
+    })
+})
+
+app.listen(process.env.PORT, function () {
+    // db.connect();
+    console.log(`listening to ${process.env.PORT}`);
 });

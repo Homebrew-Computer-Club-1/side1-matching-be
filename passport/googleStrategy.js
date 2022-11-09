@@ -1,9 +1,8 @@
 import dotenv from 'dotenv';
 import passport from "passport";
 import Google from "passport-google-oauth20";
-import { connection } from "../lib/mysql";
+import { db } from "../server";
 const GoogleStrategy = Google.Strategy;
-const db = connection;
 dotenv.config();
 export let user_token;
 export function checkToken(req, res, next) {
@@ -25,6 +24,7 @@ export function google() {
             callbackURL: `http://localhost:${process.env.PORT}/auth/google/callback`,
         }, function (accessToken, refreshToken, profile, done) {
             const user_id = profile.id;
+            user_token = accessToken;
             console.log(profile.id);
             // user_info에 google_id 존재 확인
             db.query(`select EXISTS (select google_id from user_info where google_id=${user_id} limit 1) as success`, function (error, results, fields) {

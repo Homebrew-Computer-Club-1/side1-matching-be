@@ -8,6 +8,7 @@ const GoogleStrategy = Google.Strategy;
 dotenv.config();
 
 export let user_token:string[];
+user_token=[];
 
 export function checkToken(req:express.Request, res:express.Response, next:express.NextFunction){
     if(user_token===undefined){
@@ -30,6 +31,7 @@ export function google(){
             function(accessToken, refreshToken, profile, done) {
                 const user_id = profile.id;
                 user_token.push(accessToken);
+                console.log(refreshToken);
                 console.log(profile.id);
                 // user_info에 google_id 존재 확인
                 db.query(`select EXISTS (select google_id from user_info where google_id=${user_id} limit 1) as success`, function (error, results, fields) {

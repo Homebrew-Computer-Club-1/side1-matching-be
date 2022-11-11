@@ -142,7 +142,6 @@ youtubeRouter.get('/get-subscription', checkToken, function(req, res){
             }
             
         });
-        // res.send('구독 데이터 불러오기 완료.' + JSON.stringify(response.data.items[0].snippet.resourceId));
     }).catch(function (error) {
         console.log(error);
         res.send('Error occurred: ' + error);

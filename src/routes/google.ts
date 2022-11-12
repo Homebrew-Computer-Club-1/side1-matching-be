@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import dotenv from 'dotenv';
-import {db} from '../server';
+import {db} from '../server.js';
 export const googleRouter = express.Router();
 
 dotenv.config();

@@ -25,7 +25,7 @@ export function google(){
             {
                 clientID: process.env.CLIENT_ID,
                 clientSecret: process.env.CLIENT_SECRET,
-                callbackURL: `http://localhost:${process.env.PORT}/auth/google/callback`,
+                callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
             },
             function(accessToken, refreshToken, profile, done) {
                 const user_id = profile.id;

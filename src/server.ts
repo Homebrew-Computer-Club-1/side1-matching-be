@@ -52,8 +52,7 @@ app.use(bodyParser.json())
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
-// app.use(cors());
-app.use(cors({ origin: 'http://localhost:3000'}));
+app.use(cors({ origin: `${process.env.CLIENT_URL}`}));
 
 app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');

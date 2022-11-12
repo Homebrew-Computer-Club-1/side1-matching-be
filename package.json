@@ -5,7 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "ts-node-esm src/server.ts",
+    "dev": "nodemon --exec node --loader ts-node/esm src/server.ts"
+  },
+  "engines": {
+    "node": "v18.12.0",
+    "npm": "8.19.2"
   },
   "author": "",
   "license": "ISC",

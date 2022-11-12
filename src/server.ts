@@ -5,10 +5,10 @@ import * as expressSession from 'express-session';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import axios, {AxiosResponse} from 'axios';
-import {googleRouter} from './routes/google';
-import {youtubeRouter} from './api/youtube_api';
-import passportConfig from './passport';
-import {connection} from './lib/mysql'
+import {googleRouter} from './routes/google.js';
+import {youtubeRouter} from './api/youtube_api.js';
+import passportConfig from './passport/index.js';
+import {connection} from './lib/mysql.js'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
 
@@ -16,6 +16,7 @@ dotenv.config();
 
 passportConfig();
 
+const port = process.env.PORT || 8080;
 const app = express();
 export const db=connection;
 const mysqlStore = MySQLStore(expressSession);
@@ -121,7 +122,7 @@ app.get('/get-current-user-data',function(req,res){
     })
 })
 
-app.listen(process.env.PORT, function () {
+app.listen(port, function () {
     // db.connect();
-    console.log(`listening to ${process.env.PORT}`);
+    console.log(`listening to ${port}`);
 });

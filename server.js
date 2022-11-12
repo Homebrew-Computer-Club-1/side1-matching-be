@@ -100,7 +100,7 @@ app.get('/get-current-user-data', function (req, res) {
         res.json(result[0]);
     });
 });
-app.listen(process.env.PORT || 8080, function () {
+app.listen(process.env.PORT, function () {
     // db.connect();
-    console.log(`listening to ${process.env.PORT || 8080}`);
+    console.log(`listening to ${process.env.PORT}`);
 });

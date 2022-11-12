@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import passport from "passport";
 import Google from "passport-google-oauth20";
-import { db } from "../server";
+import { db } from "../server.js";
 const GoogleStrategy = Google.Strategy;
 dotenv.config();
 export let user_token;

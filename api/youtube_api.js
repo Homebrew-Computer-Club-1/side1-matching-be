@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { checkToken, user_token } from '../passport/googleStrategy';
+import { checkToken, user_token } from '../passport/googleStrategy.js';
 import axios from 'axios';
-import { db } from '../server';
+import { db } from '../server.js';
 export const youtubeRouter = Router();
 function filter_subscription(list) {
     let result = {

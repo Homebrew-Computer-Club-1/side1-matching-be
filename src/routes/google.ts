@@ -1,13 +1,14 @@
 import express from 'express';
 import passport from 'passport';
 import dotenv from 'dotenv';
-import {db} from '../server';
+import {db} from '../server.js';
 export const googleRouter = express.Router();
 
 dotenv.config();
 
 googleRouter.get('/', passport.authenticate('google', {
-    scope: ['profile', 'https://www.googleapis.com/auth/youtube']
+    scope: ['profile', 'https://www.googleapis.com/auth/youtube'],
+    accessType : "offline"
 }));
 
 googleRouter.get('/callback',

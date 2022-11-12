@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "ts-node-esm src/server.ts",
+    "start": "node build/server.js",
+    "build" : "tsc",
+    "postinstall": "npm run build",
     "dev": "nodemon --exec node --loader ts-node/esm src/server.ts"
   },
   "engines": {

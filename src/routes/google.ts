@@ -7,14 +7,15 @@ export const googleRouter = express.Router();
 dotenv.config();
 
 googleRouter.get('/', passport.authenticate('google', {
-    scope: ['profile', 'https://www.googleapis.com/auth/youtube']
+    scope: ['profile', 'https://www.googleapis.com/auth/youtube'],
+    accessType : "offline"
 }));
 
 googleRouter.get('/callback',
     passport.authenticate('google', {failureRedirect: '/login-fail'}),
     function(req, res) {
         db.query(`SELECT * FROM user_info WHERE google_id=?`,[req.user?.id],function (err,result){
-            if (!result[0]){
+            if (!result[0]?.name){
                 res.redirect(`${process.env.CLIENT_URL}/auth/inputUserInfo/name`);
             } else {
                 res.redirect(`${process.env.CLIENT_URL}/matching`)

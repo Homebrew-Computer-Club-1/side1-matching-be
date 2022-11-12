@@ -28,35 +28,45 @@ export function google(){
                 callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
             },
             function(accessToken, refreshToken, profile, done) {
+                console.log(accessToken,refreshToken)
                 const user_id = profile.id;
                 user_token = accessToken;
                 console.log(profile.id);
                 // user_info에 google_id 존재 확인
                 db.query(`select EXISTS (select google_id from user_info where google_id=${user_id} limit 1) as success`, function (error, results, fields) {
-                    if (error)
+                    if (error){
                         throw error;
+                        return;
+                    }
                     if(results[0].success==0){
                         // user_info에 새로 추가
-                        db.query(`INSERT INTO user_info VALUES("${user_id}",DEFAULT,DEFAULT)`, function (error, results, fields) {
+                        db.query(`INSERT INTO user_info VALUES(?,DEFAULT,DEFAULT)`,[user_id], function (error, results, fields) {
                             if (error)
                                 throw error;
+                                return;
                         });
                     }
                     // google_token에 google_id 확인
-                    db.query(`select EXISTS (select google_id from google_token where google_id=${user_id} limit 1) as success`, function (error, results, fields) {
-                        if (error)
+                    db.query(`select EXISTS (select google_id from google_token where google_id=? limit 1) as success`,[user_id], function (error, results, fields) {
+                        if (error){
                             throw error;
+                            return
+                        }
                         if(results[0].success==0){
                             // google_token에 새로 추가
-                            db.query(`INSERT INTO google_token VALUES("${user_id}","${accessToken}","${refreshToken}")`, function (error, results, fields) {
-                                if (error)
+                            db.query(`INSERT INTO google_token (google_id,refresh_token) VALUES(?,?)`,[user_id,refreshToken], function (error, results, fields) {
+                                if (error){
                                     throw error;
+                                    return;
+                                }
                             });
                         }else{
                             // google_token 데이터 수정
-                            db.query(`UPDATE google_token SET access_token="${accessToken}", refresh_token="${refreshToken}" WHERE google_id="${user_id}"`, function (error, results, fields) {
-                                if (error)
+                            db.query(`UPDATE google_token SET refresh_token=? WHERE google_id=?`,[refreshToken,user_id], function (error, results, fields) {
+                                if (error){
                                     throw error;
+                                    return;
+                                }
                             });
                         }
                     });

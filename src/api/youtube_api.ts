@@ -34,8 +34,8 @@ interface Subscription{
     topicIds:String[]
 }
 
+// Youtube API 구독 데이터를 가공하는 함수
 function filter_subscription(data:SubscribedChannel){
-    // youtube api 데이터에서 categoryId만 뽑아내는 코드
     const result:Subscription = {
         topicIds: data.topicDetails.topicIds
     };
@@ -49,7 +49,8 @@ function saveYoutubeLikes(req:express.Request, res:express.Response, next:expres
         params: {
             part: 'snippet',
             myRating: 'like',
-            maxResults: 25
+            // 최대 50개까지 가능하므로, 추후 더 필요하다면 계속 요청하는 방식으로 불러오기 필요.
+            maxResults: 50
         },
         headers: {
             Authorization: `Bearer ${user_token?.access_token}`
@@ -71,7 +72,8 @@ function saveYoutubeSubscriptions(req:express.Request, res:express.Response, nex
         params: {
             part: 'snippet',
             mine: true,
-            maxResults: 25
+            // 최대 50개까지 가능하므로, 추후 더 필요하다면 계속 요청하는 방식으로 불러오기 필요.
+            maxResults: 50
         },
         headers: {
             Authorization: `Bearer ${user_token}`
@@ -87,7 +89,7 @@ function saveYoutubeSubscriptions(req:express.Request, res:express.Response, nex
                 axios.get("https://www.googleapis.com/youtube/v3/channels",{
                     params: {
                         part: 'topicDetails',
-                        maxResults: 25,
+                        maxResults: 1,
                         id: subscribed_channel_id
                     },
                     headers: {

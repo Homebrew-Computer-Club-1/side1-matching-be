@@ -58,13 +58,30 @@ app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
-app.get('/get-data', function(req,res){
+app.get('/match', function(req,res){
+    // interface MlResult{
+    //     [key:string]:string[]
+    // }
     db.query(`SELECT * FROM youtube_data`, function (error, results, fields) {
         if (error){
             throw error;
         }
-        res.send(results);
+        axios.post(`${process.env.ML_URL}/result/matching`, results)
+        .then(function(response){
+            if(req.user!=undefined){
+                if(req.user.id!=undefined){
+                    res.send({
+                        allOtherUsers: results,
+                        mlResult: response.data[req.user.id]
+                    });
+                }
+            }else{
+                res.send("Login is needed.");
+            }
+            
+        });
     });
+    
 });
 
 app.get('/get-google-id',function(req:express.Request, res:express.Response){
@@ -88,16 +105,6 @@ app.post('/update-user-info', function(req,res){
     });
 });
 
-app.get('/match',function(req,res){
-    db.query(`SELECT * FROM user_info`, function (error, results, fields) {
-        if (error)
-            throw error;
-        res.send({
-            allOtherUsers: results,
-            mlResult: ["123", "456"]
-        });
-    });
-})
 
 app.get('/get-current-user-data',function(req,res){
     console.log('getcurrentuserdata')
@@ -108,6 +115,5 @@ app.get('/get-current-user-data',function(req,res){
 })
 
 app.listen(port, function () {
-    // db.connect();
     console.log(`listening to ${port}`);
 });

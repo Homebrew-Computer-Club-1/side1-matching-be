@@ -16,6 +16,7 @@ googleRouter.get('/callback',
     function(req, res) {
         if(req.user){
             // 사용자의 이름, 나이 정보 유무 확인
+
             db.query(`select EXISTS (SELECT google_id FROM user_info WHERE google_id=? AND (name IS NULL OR age IS NULL) limit 1) as success`,[req.user.id],function (err,result){
                 console.log(result[0].success,req.user?.id)
                 if (result[0].success === 1){

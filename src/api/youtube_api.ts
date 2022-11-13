@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import { checkToken, user_token } from '../passport/googleStrategy.js';
+import { checkToken, user_tokens } from '../passport/googleStrategy.js';
 import axios from 'axios';
 import {db} from '../server.js';
 
@@ -21,40 +21,29 @@ interface SubscribedChannel{
         },
         channelId:String,
         thumbnails:any
+    },
+    topicDetails:{
+        topicIds:String[],
+        topicCategories:String[]
     }
 }
 
 // 가공된 데이터 형식
 interface Subscription{
-    categoryId: Number
+    topicIds:String[]
 }
 
-interface SubscriptionData{
-    subs_count: Number,
-    subs_cat_list: Array<Subscription>
-}
-
-
-function filter_subscription(list:Array<any>){
-    let result:SubscriptionData = {
-        subs_count: 0,
-        subs_cat_list: []
-    };
-    result.subs_count = list.length;
-    
+function filter_subscription(data:SubscribedChannel){
     // youtube api 데이터에서 categoryId만 뽑아내는 코드
-    let cat_list = list.map(x=> { 
-        if(typeof x.snippet.categoryId == "number"){
-            const subscription:Subscription = {"categoryId": x.snippet.categoryId};
-            return subscription;
-        }else{
-            return {categoryId:0};
-        }
-    });
-    result.subs_cat_list = cat_list;
+    const result:Subscription = {
+        topicIds: data.topicDetails.topicIds
+    };
+
+    return result;
 }
 
 youtubeRouter.get('/get-liked', checkToken, function(req, res){
+    const user_token = user_tokens.find(x=>x.id==req.user?.id);
     axios.get('https://www.googleapis.com/youtube/v3/videos', {
         params: {
             part: 'snippet',
@@ -62,7 +51,7 @@ youtubeRouter.get('/get-liked', checkToken, function(req, res){
             maxResults: 25
         },
         headers: {
-            Authorization: `Bearer ${user_token}`
+            Authorization: `Bearer ${user_token?.access_token}`
         }
     }).then(function (response) {
         console.log(response.data.items);
@@ -74,6 +63,9 @@ youtubeRouter.get('/get-liked', checkToken, function(req, res){
 });
 
 youtubeRouter.get('/get-subscription', checkToken, function(req, res){
+    const user_id=req.user?.id;
+    const user_token = user_tokens.find(x=>x.id==user_id)?.access_token;
+    console.log(user_token);
     axios.get('https://www.googleapis.com/youtube/v3/subscriptions', {
         params: {
             part: 'snippet',
@@ -87,7 +79,7 @@ youtubeRouter.get('/get-subscription', checkToken, function(req, res){
         let data:Array<SubscribedChannel> = response.data.items;
         // console.log(response.data.items);
         const channel_id_list: Array<string> = data.map(x=>x.snippet.resourceId.channelId);
-        let result:Array<JSON> = [];
+        let result:Array<Subscription> = [];
         let promises_list = [];
         for(const subscribed_channel_id of channel_id_list){
             promises_list.push(
@@ -101,41 +93,40 @@ youtubeRouter.get('/get-subscription', checkToken, function(req, res){
                         Authorization: `Bearer ${user_token}`
                     }
                 }).then(function(response){
-                    result.push(response.data.items[0]);
+                    const filtered_result = filter_subscription(response.data.items[0]);
+                    result.push(filtered_result);
                 })
             );
         }
         Promise.all(promises_list).then(() =>{
             if(req.user){
-                db.query(`select EXISTS (select google_id from user_info where google_id=${req.user.id} limit 1) as success`, function (error, results, fields) {
+                db.query(`select EXISTS (select google_id from youtube_data where google_id=? limit 1) as success`,[user_id], function (error, results, fields) {
                     if (error)
                         throw error;
 
-                    console.log(results);
+                    // console.log(results);
 
                     // youtube_data 테이블에 해당 사용자 데이터 없을 시,
                     if(results[0].success==0){
-                        if(req.user){
-                            db.query(`INSERT INTO youtube_data VALUES("${req.user.id}",DEFAULT,"${JSON.stringify(result)}")`, function (error, results, fields) {
-                                if (error)
-                                    throw error;
-                                res.status(200);
-                            });
-                        }
+                        db.query(`INSERT INTO youtube_data VALUES(?,DEFAULT,?)`,[user_id,JSON.stringify(result)], function (error, results, fields) {
+                            if (error)
+                                throw error;
+                            res.status(200);
+                        });
+                        
                     // youtube_data 테이블에 해당 사용자 데이터 존재 시,
                     }else{
-                        if(req.user){
-                            db.query(`UPDATE youtube_data SET subs_data='${JSON.stringify(result)}' WHERE google_id="${req.user.id}"`, function (error, results, fields) {
-                                if (error)
-                                    throw error;
-                                res.status(200);
-                            });
-                        }
+                        db.query(`UPDATE youtube_data SET subs_data=? WHERE google_id=?`,[JSON.stringify(result), user_id], function (error, results, fields) {
+                            if (error)
+                                throw error;
+                            res.status(200);
+                        });
+                        
                     }
                 });
                 
                 res.send(JSON.stringify(result));
-                console.log(result);
+                // console.log(result);
             }else{
                 res.send('로그인을 확인할 수 없습니다.');
                 console.log('req.user is undefined');

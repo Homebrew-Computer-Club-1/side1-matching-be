@@ -11,6 +11,8 @@ import passportConfig from './passport/index.js';
 import {connection} from './lib/mysql.js'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
+import { ListFormat } from 'typescript';
+import { MysqlError } from 'mysql';
 
 dotenv.config();
 
@@ -58,7 +60,11 @@ app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
-
+interface IuserData {
+    google_id: string;
+    like_data: string,
+    subs_data: string
+}
 interface ImatchPostData {
 
 }
@@ -69,16 +75,20 @@ interface ImlResult {
 }
 
 app.get('/match', function(req,res){
-    db.query(`SELECT * FROM youtube_data`, function (error, allUserDatas, fields) {
+    db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allUserDatas:IuserData[], fields: any) {
         if (error){
             throw error;
         }
-        const sendData = {google_id : allUserDatas[0].google_id,
-            like_data:allUserDatas[0].like_data,
-            subs_data:JSON.parse(allUserDatas[0].subs_data)
-        };
-        console.log(sendData)
-        console.log(sendData.subs_data)
+        const sendList = allUserDatas.map(x => { 
+            return {
+                google_id : x.google_id,
+                like_data: x.like_data,
+                subs_data: JSON.parse(x.subs_data)
+            };
+        });
+        res.send(sendList);
+        
+        // console.log(sendList)
         // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
         // .then(response => {
         //     const mlResult : ImlResult = response.data;

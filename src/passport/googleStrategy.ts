@@ -45,7 +45,7 @@ export function google(){
                 console.log(refreshToken);
                 console.log(profile.id);
                 // user_info에 google_id 존재 확인
-                db.query(`select EXISTS (select google_id from user_info where google_id=${user_id} limit 1) as success`, function (error, results, fields) {
+                db.query(`select EXISTS (select google_id from user_info where google_id=? limit 1) as success`,[user_id],function (error, results, fields) {
                     if (error){
                         throw error;
                     }

@@ -39,11 +39,9 @@ export function google(){
                 callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
             },
             function(accessToken, refreshToken, profile, done) {
-                console.log(accessToken,refreshToken)
+                console.log(`token got,`,`user:${profile.id}`)
                 const user_id = profile.id;
                 user_tokens.push({id:user_id, access_token:accessToken});
-                console.log(refreshToken);
-                console.log(profile.id);
                 // user_info에 google_id 존재 확인
                 db.query(`select EXISTS (select google_id from user_info where google_id=? limit 1) as success`,[user_id],function (error, results, fields) {
                     if (error){

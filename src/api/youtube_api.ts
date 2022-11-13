@@ -50,7 +50,7 @@ function saveYoutubeLikes(req:express.Request, res:express.Response, next:expres
             part: 'snippet',
             myRating: 'like',
             // 최대 50개까지 가능하므로, 추후 더 필요하다면 계속 요청하는 방식으로 불러오기 필요.
-            maxResults: 50
+            maxResults: 25
         },
         headers: {
             Authorization: `Bearer ${user_token?.access_token}`
@@ -73,7 +73,7 @@ function saveYoutubeSubscriptions(req:express.Request, res:express.Response, nex
             part: 'snippet',
             mine: true,
             // 최대 50개까지 가능하므로, 추후 더 필요하다면 계속 요청하는 방식으로 불러오기 필요.
-            maxResults: 50
+            maxResults: 25
         },
         headers: {
             Authorization: `Bearer ${user_token}`

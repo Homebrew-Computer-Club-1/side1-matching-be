@@ -58,30 +58,33 @@ app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
+
+interface ImatchPostData {
+
+}
+type TgoogleId = string;
+
+interface ImlResult {
+    [key :TgoogleId] : TgoogleId[];
+}
+
 app.get('/match', function(req,res){
-    // interface MlResult{
-    //     [key:string]:string[]
-    // }
-    db.query(`SELECT * FROM youtube_data`, function (error, results, fields) {
+    db.query(`SELECT * FROM youtube_data`, function (error, allUserDatas, fields) {
         if (error){
             throw error;
         }
-        axios.post(`${process.env.ML_URL}/result/matching`, results)
-        .then(function(response){
-            if(req.user!=undefined){
-                if(req.user.id!=undefined){
-                    res.send({
-                        allOtherUsers: results,
-                        mlResult: response.data[req.user.id]
-                    });
-                }
-            }else{
-                res.send("Login is needed.");
-            }
-            
-        });
+        const sendData = {google_id : allUserDatas[0].google_id,
+            like_data:allUserDatas[0].like_data,
+            subs_data:JSON.parse(allUserDatas[0].subs_data)
+        };
+        console.log(sendData)
+        console.log(sendData.subs_data)
+        // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
+        // .then(response => {
+        //     const mlResult : ImlResult = response.data;
+        //     res.send({allUserDatas,mlResult})
+        // });
     });
-    
 });
 
 app.get('/get-google-id',function(req:express.Request, res:express.Response){

@@ -1,4 +1,5 @@
 import {Router} from 'express';
+import express from "express";
 import { checkToken, user_tokens } from '../passport/googleStrategy.js';
 import axios from 'axios';
 import {db} from '../server.js';
@@ -42,7 +43,7 @@ function filter_subscription(data:SubscribedChannel){
     return result;
 }
 
-youtubeRouter.get('/get-liked', checkToken, function(req, res){
+function saveYoutubeLikes(req:express.Request, res:express.Response, next:express.NextFunction){
     const user_token = user_tokens.find(x=>x.id==req.user?.id);
     axios.get('https://www.googleapis.com/youtube/v3/videos', {
         params: {
@@ -54,15 +55,15 @@ youtubeRouter.get('/get-liked', checkToken, function(req, res){
             Authorization: `Bearer ${user_token?.access_token}`
         }
     }).then(function (response) {
-        console.log(response.data.items);
-        res.send('좋아요한 동영상 데이터 불러오기 완료.'+JSON.stringify(response.data.items));
+        console.log("좋아요 데이터 저장 성공");
+        next();
     }).catch(function (error) {
         console.log(error);
         res.send('Error occurred: ' + error);
     });
-});
+}
 
-youtubeRouter.get('/get-subscription', checkToken, function(req, res){
+function saveYoutubeSubscriptions(req:express.Request, res:express.Response, next:express.NextFunction){
     const user_id=req.user?.id;
     const user_token = user_tokens.find(x=>x.id==user_id)?.access_token;
     console.log(user_token);
@@ -125,16 +126,21 @@ youtubeRouter.get('/get-subscription', checkToken, function(req, res){
                     }
                 });
                 
-                res.send(JSON.stringify(result));
-                // console.log(result);
+                console.log("구독 데이터 저장 성공");
+                next();
             }else{
                 res.send('로그인을 확인할 수 없습니다.');
                 console.log('req.user is undefined');
             }
-            
         });
+        
     }).catch(function (error) {
         console.log(error);
         res.send('Error occurred: ' + error);
     });
+}
+
+youtubeRouter.get('/save-youtube-data',checkToken, saveYoutubeLikes, saveYoutubeSubscriptions, function(req,res){
+    res.send("DB: 유튜브 데이터 저장 성공");
 });
+

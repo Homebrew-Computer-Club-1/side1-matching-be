@@ -60,39 +60,47 @@ app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
-interface IuserData {
-    google_id: string;
+type TgoogleId = string;
+
+interface IyoutubeData {
+    google_id: TgoogleId;
     like_data: string,
     subs_data: string
 }
 interface ImatchPostData {
 
 }
-type TgoogleId = string;
 
 interface ImlResult {
     [key :TgoogleId] : TgoogleId[];
 }
+app.get('/get-all-user-datas',function(req,res){
+    db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
+        res.send(allUserDatas);
+    })
+})
+
+
 
 app.get('/match', function(req,res){
-    db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allUserDatas:IuserData[], fields: any) {
+    db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
         if (error){
             throw error;
         }
-        const sendList = allUserDatas.map(x => { 
+        // 1. youtube 데이터 ML 서버 전송전 전처리
+        const sendList = allYoutubeDatas.map(x => { 
             return {
                 google_id : x.google_id,
                 like_data: x.like_data,
                 subs_data: JSON.parse(x.subs_data)
             };
         });
-        res.send(sendList);
-        
-        // console.log(sendList)
+        // 2. ML 서버로 데이터 전송 => 매칭 결과 받아서 FE로 전송
+
         // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
         // .then(response => {
         //     const mlResult : ImlResult = response.data;
-        //     res.send({allUserDatas,mlResult})
+            res.send(["user2id","115987064282754163674","user3id"])
         // });
     });
 });

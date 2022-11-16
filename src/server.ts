@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import axios, {AxiosResponse} from 'axios';
 import {googleRouter} from './routes/google.js';
-import {youtubeRouter} from './api/youtube_api.js';
+import {youtubeRouter, updateYoutubeLikes, updateYoutubeSubscriptions} from './api/youtube_api.js';
 import passportConfig from './passport/index.js';
 import {connection} from './lib/mysql.js'
 import cors from "cors";
@@ -186,6 +186,17 @@ app.get('/update-tokens',function(req,res,next){
         // console.log(user_tokens);
         res.send("Access Token 업데이트 성공.<br/>" + JSON.stringify(user_tokens)); 
     });
+});
+
+app.get('/update-youtube-data', async function(req,res){
+    console.log(user_tokens);
+    for (const token_data of user_tokens){
+        console.log(token_data);
+        const {id:id, access_token:token} = token_data;
+        await updateYoutubeLikes(id,token);
+        await updateYoutubeSubscriptions(id,token);
+    }
+    res.send('유튜브 데이터 갱신 성공');
 });
 
 app.listen(port, function () {

@@ -95,6 +95,11 @@ interface ImatchPostData {
 interface ImlResult {
     [key :TgoogleId] : TgoogleId[];
 }
+interface IuserDataOnBE {
+    google_id:TgoogleId;
+    name:string;
+    age:number;
+}
 
 app.get('/match', function(req,res){
     db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
@@ -114,8 +119,19 @@ app.get('/match', function(req,res){
         // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
         // .then(response => {
         //     const mlResult : ImlResult = response.data;
-            res.send(["user2id","115987064282754163674","user3id"])
         // });
+
+        // 임시 코드
+        db.query(`SELECT * FROM user_info`,function(err,allUserDatas : IuserDataOnBE[]){
+            const result = allUserDatas.map(userData => {
+                return userData.google_id
+            });
+            function shuffle(array : string[]) {
+                return array.sort(() => Math.random() - 0.5);
+            }
+            res.send(shuffle(result));
+        })
+
     });
 });
 

@@ -13,6 +13,7 @@ import cors from "cors";
 import MySQLStore from 'express-mysql-session';
 import { ListFormat } from 'typescript';
 import { MysqlError } from 'mysql';
+import {IPassport} from './sessionType';
 
 dotenv.config();
 
@@ -48,6 +49,12 @@ declare global {
     }
 }
 
+declare module 'express-session' {
+    export interface SessionData {
+      passport:IPassport
+    }
+  }
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json())
@@ -59,6 +66,20 @@ app.use(cors({ origin: `${process.env.CLIENT_URL}`}));
 app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
+
+app.get('/login-check',function(req,res){
+    if (req.session.passport){
+        res.send({loggedIn:true})
+    } else {
+        res.send({loggedIn:false})
+    }
+})
+
+app.get('/get-all-user-datas',function(req,res){
+    db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
+        res.send(allUserDatas);
+    })
+})
 
 type TgoogleId = string;
 
@@ -74,13 +95,6 @@ interface ImatchPostData {
 interface ImlResult {
     [key :TgoogleId] : TgoogleId[];
 }
-app.get('/get-all-user-datas',function(req,res){
-    db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
-        res.send(allUserDatas);
-    })
-})
-
-
 
 app.get('/match', function(req,res){
     db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {

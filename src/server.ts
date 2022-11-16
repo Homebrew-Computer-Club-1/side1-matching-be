@@ -11,8 +11,10 @@ import passportConfig from './passport/index.js';
 import {connection} from './lib/mysql.js'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
-import { ListFormat } from 'typescript';
 import { MysqlError } from 'mysql';
+import { user_tokens, tokenExists, updateToken } from './passport/googleStrategy.js';
+import refresh from 'passport-oauth2-refresh';
+import { isNamedExportBindings } from 'typescript';
 
 dotenv.config();
 
@@ -133,7 +135,58 @@ app.get('/get-current-user-data',function(req,res){
         console.log(result[0])
         res.json(result[0])
     })
-})
+});
+
+app.get('/update-tokens',function(req,res,next){
+    // DB에서 가져온 google_token의 데이터 형식
+    interface RefreshTokenData{
+        google_id:string,
+        refresh_token:string
+    }
+
+    // 비동기적 콜백 실행을 위한 함수
+    function promiseNewAccessToken(token_data:RefreshTokenData){
+        const error_msg = "";
+        return new Promise((resolve, reject)=>{
+            refresh.requestNewAccessToken(
+                'google',
+                token_data.refresh_token,
+                function (err, accessToken, refreshToken) {
+                    if(accessToken==undefined) reject(error_msg);
+                    const user_id = token_data.google_id;
+                    if(tokenExists(user_id)){
+                        updateToken(user_id, accessToken);
+                        console.log('inside: ' + user_tokens);
+                    }else{
+                        user_tokens.push({
+                            id:user_id,
+                            access_token:accessToken
+                        });
+                    }
+                    resolve(true);
+                }
+            );
+        });
+    }
+
+    db.query(`SELECT * FROM google_token`,async function(err, result){
+        // 갱신 전 확인
+        // console.log(user_tokens);
+
+        if(err) throw err;
+        // DB google_token에 있는 refresh token 으로 각각의 access token 저장(갱신) 
+        for (const token_data of result){
+            try{
+                await promiseNewAccessToken(token_data);
+            }catch(error){
+                console.log(error);
+            }
+        }
+        // 갱신 후 확인
+        // console.log(user_tokens);
+        res.send("Access Token 업데이트 성공.<br/>" + JSON.stringify(user_tokens)); 
+    });
+});
 
 app.listen(port, function () {
     console.log(`listening to ${port}`);

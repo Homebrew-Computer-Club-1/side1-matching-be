@@ -16,6 +16,9 @@ import { user_tokens, tokenExists, updateToken } from './passport/googleStrategy
 import refresh from 'passport-oauth2-refresh';
 import { isNamedExportBindings } from 'typescript';
 
+import {IPassport} from './sessionType';
+
+
 dotenv.config();
 
 passportConfig();
@@ -50,6 +53,12 @@ declare global {
     }
 }
 
+declare module 'express-session' {
+    export interface SessionData {
+      passport:IPassport
+    }
+  }
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json())
@@ -61,6 +70,20 @@ app.use(cors({ origin: `${process.env.CLIENT_URL}`}));
 app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
+
+app.get('/login-check',function(req,res){
+    if (req.session.passport){
+        res.send({loggedIn:true})
+    } else {
+        res.send({loggedIn:false})
+    }
+})
+
+app.get('/get-all-user-datas',function(req,res){
+    db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
+        res.send(allUserDatas);
+    })
+})
 
 type TgoogleId = string;
 
@@ -76,13 +99,11 @@ interface ImatchPostData {
 interface ImlResult {
     [key :TgoogleId] : TgoogleId[];
 }
-app.get('/get-all-user-datas',function(req,res){
-    db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
-        res.send(allUserDatas);
-    })
-})
-
-
+interface IuserDataOnBE {
+    google_id:TgoogleId;
+    name:string;
+    age:number;
+}
 
 app.get('/match', function(req,res){
     db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
@@ -102,10 +123,32 @@ app.get('/match', function(req,res){
         // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
         // .then(response => {
         //     const mlResult : ImlResult = response.data;
-            res.send(["user2id","115987064282754163674","user3id"])
         // });
+
+        // 임시 코드
+        db.query(`SELECT * FROM user_info`,function(err,allUserDatas : IuserDataOnBE[]){
+            const result = allUserDatas.map(userData => {
+                return userData.google_id
+            });
+            function shuffle(array : string[]) {
+                return array.sort(() => Math.random() - 0.5);
+            }
+            res.send(shuffle(result));
+        })
+
     });
 });
+app.get('/logout',function(req,res){
+  req.logout(function(){
+    req.session.save(function(){
+        res.status(200);
+      })
+    }
+  );
+
+
+})
+
 
 app.get('/get-google-id',function(req:express.Request, res:express.Response){
     console.log('getgoogleid')
@@ -124,7 +167,7 @@ app.post('/update-user-info', function(req,res){
         }
         console.log(req.body)
         console.log('executed')
-        res.status(200);
+        res.send(true);
     });
 });
 

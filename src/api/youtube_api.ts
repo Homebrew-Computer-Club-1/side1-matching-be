@@ -37,7 +37,7 @@ interface Subscription{
 // Youtube API 구독 데이터를 가공하는 함수
 function filter_subscription(data:SubscribedChannel){
     const result:Subscription = {
-        topicIds: data.topicDetails.topicIds
+        topicIds: data.topicDetails?.topicIds // 여기 data.topicDetails가 undefined 로 뜰떄도 있어 수정함.
     };
 
     return result;

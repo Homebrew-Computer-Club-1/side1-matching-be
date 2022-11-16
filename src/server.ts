@@ -134,6 +134,17 @@ app.get('/match', function(req,res){
 
     });
 });
+app.get('/logout',function(req,res){
+  req.logout(function(){
+    req.session.save(function(){
+        res.status(200);
+      })
+    }
+  );
+
+
+})
+
 
 app.get('/get-google-id',function(req:express.Request, res:express.Response){
     console.log('getgoogleid')
@@ -152,7 +163,7 @@ app.post('/update-user-info', function(req,res){
         }
         console.log(req.body)
         console.log('executed')
-        res.status(200);
+        res.send(true);
     });
 });
 

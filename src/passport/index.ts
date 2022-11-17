@@ -7,7 +7,7 @@ export default function(){
         done(null, data);
     })
     passport.deserializeUser(function(data:Express.User, done){
-        console.log('deserialize');
+        console.log('deserialize :',data.id);
         done(null, data);
     })
     google();

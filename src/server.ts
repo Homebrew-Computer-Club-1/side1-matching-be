@@ -41,7 +41,7 @@ app.use(session({
     secret: 'keyboard cat',
     resave: false,
     store: sessionStore,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: { secure: false }
 }));
 
@@ -72,6 +72,7 @@ app.get('/',function(req:express.Request, res:express.Response){
 });
 
 app.get('/login-check',function(req,res){
+console.log('<logged in check logic>')
     if (req.session.passport){
         res.send({loggedIn:true})
     } else {
@@ -138,15 +139,14 @@ app.get('/match', function(req,res){
 
     });
 });
+
 app.get('/logout',function(req,res){
-  req.logout(function(){
-    req.session.save(function(){
-        res.status(200);
-      })
-    }
-  );
-
-
+console.log('<logout logic>')
+    req.logout(function(){  
+        req.session.save(function(){
+            res.status(200);
+        })
+    });
 })
 
 

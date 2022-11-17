@@ -42,10 +42,16 @@ export function checkToken(req:express.Request, res:express.Response, next:expre
     }
 }
 
+// <google login logic>
 export function google(){
+    console.log('<google login logic>')
+    // 1. process.env체크
+    console.log('1.check process.env')
     if (process.env.CLIENT_ID == undefined || process.env.CLIENT_SECRET == undefined) {
         console.log(`OAuth2.0 ${!process.env.CLIENT_SECRET ? "CLIENT_SECRET," : undefined} ${!process.env.CLEINT_ID ? "CLIENT_ID" : undefined} is undefined`);
-    }else{
+    // 2. googleStrategy 실행
+    } else{
+        console.log('2.execute GoogleStrategy')
         const google_strategy = new GoogleStrategy(
             {
                 clientID: process.env.CLIENT_ID,
@@ -53,47 +59,47 @@ export function google(){
                 callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
             },
             function(accessToken, refreshToken, profile, done) {
-                console.log(`token got,`,`user:${profile.id}`)
+                // 1) 토큰, 유저 정보 가져오기
+                console.log(`1)token got,`,`user:${profile.id}`)
                 const user_id = profile.id;
                 user_tokens.push({id:user_id, access_token:accessToken});
-                // user_info에 google_id 존재 확인
-                db.query(`select EXISTS (select google_id from user_info where google_id=? limit 1) as success`,[user_id],function (error, results, fields) {
-                    if (error){
-                        throw error;
-                    }
-                    if(results[0].success==0){
-                        // user_info에 새로 추가
-                        db.query(`INSERT INTO user_info VALUES(?,DEFAULT,DEFAULT)`,[user_id], function (error, results, fields) {
-                            if (error)
-                                throw error;
-                        });
-                    }
-                    // google_token에 google_id 확인
-                    db.query(`select EXISTS (select google_id from google_token where google_id=? limit 1) as success`,[user_id], function (error, results, fields) {
+                // 2) mysql 로직 - 회원가입체크, 토큰 INSERT , user_info INSERT
+                console.log('2) mysql logic')
+                 // (1) 가입된 유저인지 체크 (user_info에 google_id 존재 확인)
+                    console.log('(1) register check')
+                    db.query(`select EXISTS (select google_id from user_info where google_id=? limit 1) as success`,[user_id],function (error, results, fields) {
                         if (error){
                             throw error;
                         }
-                        console.log(user_tokens);
-                        if(results[0].success==0){
-                            // google_token에 새로 추가
-                            db.query(`INSERT INTO google_token (google_id,refresh_token) VALUES(?,?)`,[user_id,refreshToken], function (error, results, fields) {
-                                if (error){
+                        // i. 미 가입자 일시
+                        if(results[0].success === 0){
+                            console.log('i. not registered user')
+                            // ((1)) 회원가입 (user_info에 google_id,null,null 삽입)
+                            console.log('((1)) inserting googleId into db - user_info')
+                            db.query(`INSERT INTO user_info VALUES(?,DEFAULT,DEFAULT)`,[user_id], function (error, results, fields) {
+                                if (error)
                                     throw error;
-                                }
+                                // ((2)) refresh token 삽입 (google_token에 refresh_token 삽입)
+                                console.log('((2)) inserting refresh token into db - google_token')
+                                db.query(`INSERT INTO google_token (google_id,refresh_token) VALUES(?,?)`,[user_id,refreshToken], function (error, results, fields) {
+                                    if (error){
+                                        throw error;
+                                    }
+                                    // ((3)) 완료
+                                    console.log('complete')
+                                    done(null,profile)
+                                });
                             });
-                        }else{
-                            // google_token 데이터 수정
-                            db.query(`UPDATE google_token SET refresh_token=? WHERE google_id=?`,[refreshToken,user_id], function (error, results, fields) {
-                                if (error){
-                                    throw error;
-                                }
-                            });
+                        // ii. 기 가입자 일시
+                        } else {
+                            console.log('ii. already registered user')
+                            // 완료
+                            console.log('complete')
+                            done(null,profile)
                         }
-                    });
-                });
-                done(null, profile);
+                    })
             }
-        );
+        )
         passport.use(google_strategy);
         refresh.use(google_strategy);
     }

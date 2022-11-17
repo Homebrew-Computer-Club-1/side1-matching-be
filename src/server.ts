@@ -143,9 +143,10 @@ app.get('/match', function(req,res){
 app.get('/logout',function(req,res){
 console.log('<logout logic>')
     req.logout(function(){  
-        req.session.save(function(){
+        req.session.destroy(()=>{
+                // res.clearCookie('connect.sid');
             res.status(200);
-        })
+        });
     });
 })
 

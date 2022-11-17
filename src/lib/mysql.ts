@@ -9,19 +9,25 @@ const connection = mysql.createConnection({
   password : process.env.DB_PW,
   database : process.env.DB_NAME
 });
-function handleDisconnect() {
+
+
+function handleDisconnect() {         
   connection.connect(function(err) {            
-    if(err) {                            
+    if(err) {                     
       console.log('error when connecting to db:', err);
+      connection.end();
       setTimeout(handleDisconnect, 2000); 
     }                                   
-  });                                 
-                                         
+  });  
+
+
   connection.on('error', function(err) {
     console.log('db error', err);
     if(err.code === 'PROTOCOL_CONNECTION_LOST') { 
+      connection.end();
       return handleDisconnect();                      
-    } else {                                    
+    } else {
+      connection.end();
       throw err;                              
     }
   });
@@ -30,3 +36,5 @@ function handleDisconnect() {
 handleDisconnect();
 
 export {connection}
+
+

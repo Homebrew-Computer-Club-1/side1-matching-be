@@ -15,7 +15,6 @@ function handleDisconnect() {
   connection.connect(function(err) {            
     if(err) {                     
       console.log('error when connecting to db:', err);
-      connection.end();
       setTimeout(handleDisconnect, 2000); 
     }                                   
   });  
@@ -24,17 +23,14 @@ function handleDisconnect() {
   connection.on('error', function(err) {
     console.log('db error', err);
     if(err.code === 'PROTOCOL_CONNECTION_LOST') { 
-      connection.end();
       return handleDisconnect();                      
     } else {
-      connection.end();
       throw err;                              
     }
   });
 }
 
-handleDisconnect();
 
-export {connection}
+export {connection,handleDisconnect}
 
 

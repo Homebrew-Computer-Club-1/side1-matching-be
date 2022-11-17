@@ -8,7 +8,7 @@ import axios, {AxiosResponse} from 'axios';
 import {googleRouter} from './routes/google.js';
 import {youtubeRouter, updateYoutubeLikes, updateYoutubeSubscriptions} from './api/youtube_api.js';
 import passportConfig from './passport/index.js';
-import {connection} from './lib/mysql.js'
+import {connection, handleDisconnect} from './lib/mysql.js'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
 import { MysqlError } from 'mysql';
@@ -164,7 +164,8 @@ app.post('/update-user-info', function(req,res){
     console.log('updateuserinfo')
     db.query(`UPDATE user_info SET name=?, age=? WHERE google_id=?`, [req.body.name, req.body.age, req.body.googleId], function (error, results, fields) {
         if (error){
-            throw error;
+            handleDisconnect();
+            // throw error;
         }
         console.log(req.body)
         console.log('executed')

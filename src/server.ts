@@ -28,6 +28,7 @@ const app = express();
 export const db=connection;
 const mysqlStore = MySQLStore(expressSession);
 
+app.set("trust proxy", 1);
 const session_options = {
     host     : process.env.DB_HOST as string,
     user     : process.env.DB_USER as string,

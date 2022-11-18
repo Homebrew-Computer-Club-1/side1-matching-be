@@ -39,7 +39,7 @@ const sessionStore = new mysqlStore(session_options);
 
 app.use(session({
     secret: 'keyboard cat',
-    resave: false,
+    resave: true,
     store: sessionStore,
     saveUninitialized: false,
     cookie: {
@@ -68,7 +68,10 @@ app.use(bodyParser.json())
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
-app.use(cors());
+app.use(cors({
+    credentials:true,
+    origin: process.env.CLIENT_URL
+}));
 
 app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');

@@ -42,7 +42,10 @@ app.use(session({
     resave: false,
     store: sessionStore,
     saveUninitialized: false,
-    cookie: { secure: false }
+    cookie: {
+        sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
+        secure: process.env.NODE_ENV === "production", // must be true if sameSite='none'
+    }
 }));
 
 declare global {

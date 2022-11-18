@@ -4,14 +4,10 @@ import passport from "passport";
 import Google from "passport-google-oauth20";
 import {db} from "../server.js";
 import refresh from 'passport-oauth2-refresh';
+import { TokenData } from "../type/server_type.js";
 const GoogleStrategy = Google.Strategy;
 
 dotenv.config();
-
-interface TokenData{
-    id:string,
-    access_token:string
-}
 
 export let user_tokens:TokenData[];
 user_tokens=[];
@@ -55,7 +51,11 @@ export function google(){
             function(accessToken, refreshToken, profile, done) {
                 console.log(`token got,`,`user:${profile.id}`)
                 const user_id = profile.id;
-                user_tokens.push({id:user_id, access_token:accessToken});
+                const user_token_data:TokenData = {
+                    id:user_id, 
+                    access_token:accessToken
+                };
+                user_tokens.push(user_token_data);
                 // user_info에 google_id 존재 확인
                 db.query(`select EXISTS (select google_id from user_info where google_id=? limit 1) as success`,[user_id],function (error, results, fields) {
                     if (error){

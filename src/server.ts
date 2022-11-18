@@ -17,6 +17,7 @@ import refresh from 'passport-oauth2-refresh';
 import { isNamedExportBindings } from 'typescript';
 
 import {IPassport} from './sessionType';
+import { IuserDataOnBE, IyoutubeData } from './type/db_type.js';
 
 
 dotenv.config();
@@ -85,24 +86,9 @@ app.get('/get-all-user-datas',function(req,res){
     })
 })
 
-type TgoogleId = string;
-
-interface IyoutubeData {
-    google_id: TgoogleId;
-    like_data: string,
-    subs_data: string
-}
+// 어떤 용도의 데이터인지 파악 x
 interface ImatchPostData {
 
-}
-
-interface ImlResult {
-    [key :TgoogleId] : TgoogleId[];
-}
-interface IuserDataOnBE {
-    google_id:TgoogleId;
-    name:string;
-    age:number;
 }
 
 app.get('/match', function(req,res){
@@ -126,7 +112,7 @@ app.get('/match', function(req,res){
         // });
 
         // 임시 코드
-        db.query(`SELECT * FROM user_info`,function(err,allUserDatas : IuserDataOnBE[]){
+        db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : IuserDataOnBE[]){
             const result = allUserDatas.map(userData => {
                 return userData.google_id
             });

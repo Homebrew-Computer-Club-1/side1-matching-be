@@ -152,8 +152,7 @@ console.log('<logout logic>')
 
 
 app.get('/get-google-id',function(req:express.Request, res:express.Response){
-    console.log('getgoogleid')
-        console.log(req.user?.id);
+    console.log('<get-google-id logic>',`req.user.id : ${req.user?.id}`)
         res.json({googleId: req.user?.id});
     // if(req.user != undefined){
 
@@ -161,14 +160,13 @@ app.get('/get-google-id',function(req:express.Request, res:express.Response){
 })
 
 app.post('/update-user-info', function(req,res){
-    console.log('updateuserinfo')
+    console.log('<updateuserinfo logic>')
+    console.log(`1. req.body : ${req.body}`)
     db.query(`UPDATE user_info SET name=?, age=? WHERE google_id=?`, [req.body.name, req.body.age, req.body.googleId], function (error, results, fields) {
         if (error){
-            handleDisconnect();
             // throw error;
         }
-        console.log(req.body)
-        console.log('executed')
+        console.log(`2. UPDATE db finished. result : ${results[0]}`)
         res.send(true);
     });
 });

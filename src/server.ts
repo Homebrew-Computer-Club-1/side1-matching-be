@@ -46,6 +46,7 @@ app.use(session({
     cookie: {
         sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
         secure: process.env.NODE_ENV === "production", // must be true if sameSite='none'
+        domain : process.env.CLIENT_ORIGIN,
     }
 }));
 

@@ -14,7 +14,6 @@ import MySQLStore from 'express-mysql-session';
 import { MysqlError } from 'mysql';
 import { user_tokens, tokenExists, updateToken } from './passport/googleStrategy.js';
 import refresh from 'passport-oauth2-refresh';
-import { isNamedExportBindings } from 'typescript';
 
 import {IPassport} from './sessionType';
 
@@ -40,12 +39,15 @@ const sessionStore = new mysqlStore(session_options);
 
 app.use(session({
     secret: 'keyboard cat',
-    resave: false,
+    resave: true,
     store: sessionStore,
     saveUninitialized: false,
+    // proxy : process.env.NODE_ENV === "production",
     cookie: {
+        httpOnly: true,
         sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
         secure: process.env.NODE_ENV === "production", // must be true if sameSite='none'
+        domain : 'herokuapp.com'
     }
 }));
 
@@ -66,6 +68,11 @@ declare module 'express-session' {
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json())
+
+app.use("*",function(req,res,next){
+    console.log(`req.user : ${req.user?.id}`)
+    next();
+})
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);

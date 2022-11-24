@@ -17,9 +17,7 @@ import refresh from 'passport-oauth2-refresh';
 import {IPassport} from './sessionType';
 import path from "path";
 const __dirname = path.resolve();
-
-const envPath = path.basename(__dirname) === 'server'  ? '../.env' : '../../.env'
-dotenv.config({path : path.join(__dirname, envPath)});
+dotenv.config({path : path.join(__dirname, '../.env')});
 
 passportConfig();
 

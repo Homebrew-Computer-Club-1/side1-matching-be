@@ -1,7 +1,9 @@
 import mysql from 'mysql';
 import dotenv from 'dotenv';
+import path from "path";
+const __dirname = path.resolve();
 
-dotenv.config();
+dotenv.config({path : path.join(__dirname, '../.env')});
 
 const connection = mysql.createConnection({
   host     : process.env.DB_HOST,

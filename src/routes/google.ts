@@ -22,11 +22,11 @@ googleRouter.get('/callback',
             if (result[0].success === 1){
                 // i. null 인게 있으면 [ if google_id = req.user.id && (name || age = NULL) 일 경우] , userInfo 입력 페이지로 이동
                 console.log('i. null exists. redirecting to inputUserInfo')
-                res.redirect(`${process.env.CLIENT_URL}/auth/inputUserInfo/name`);
+                res.redirect(`/auth/inputUserInfo/name`);
             } else {
                 // ii. "" 없으면 matching 페이지로.
                 console.log('ii. null not exists. redirecting to matching')
-                res.redirect(`${process.env.CLIENT_URL}/matching`)
+                res.redirect(`/matching`)
             }
         })
     }

@@ -258,7 +258,7 @@ app.get('/api',function(req:express.Request, res:express.Response){
 });
 
 app.get('*', (req,res) =>{
-    res.sendFile(path.join(__dirname+'/build_server/build_client/index.html'));
+    res.sendFile(path.join(__dirname+'/build_be/build_fe/index.html'));
 });
 
 app.listen(port, function () {

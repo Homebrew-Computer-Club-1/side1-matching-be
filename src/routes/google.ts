@@ -14,20 +14,20 @@ googleRouter.get('/', passport.authenticate('google', {
 googleRouter.get('/callback',
     passport.authenticate('google', {failureRedirect: '/login-fail'}),
     function(req, res) {
-        if(req.user){
-            // 사용자의 이름, 나이 정보 유무 확인
-
-            db.query(`select EXISTS (SELECT google_id FROM user_info WHERE google_id=? AND (name IS NULL OR age IS NULL) limit 1) as success`,[req.user.id],function (err,result){
-                console.log(result[0].success,req.user?.id)
-                if (result[0].success === 1){
-                    //처음 가입하는 유저 [ if google_id = req.user.id && (name || age = NULL) 일 경우] , 이름/나이 입력 페이지로 이동
-                    res.redirect(`${process.env.CLIENT_URL}/auth/inputUserInfo/name`);
-                } else {
-                    // 그외, matching 페이지로.
-                    res.redirect(`${process.env.CLIENT_URL}/matching`)
-                }
-            })
-        }
-
+        // <redirection to FE logic>
+        console.log('<redirection to FE logic>')
+        // 1. userInfo (name,age) 중 null 있는지 확인
+        console.log('1. checking null on db - user_info - userInfo')
+        db.query(`select EXISTS (SELECT google_id FROM user_info WHERE google_id=? AND (name IS NULL OR age IS NULL) limit 1) as success`,[req.user?.id],function (err,result){
+            if (result[0].success === 1){
+                // i. null 인게 있으면 [ if google_id = req.user.id && (name || age = NULL) 일 경우] , userInfo 입력 페이지로 이동
+                console.log('i. null exists. redirecting to inputUserInfo')
+                res.redirect(`${process.env.CLIENT_URL}/auth/inputUserInfo/name`);
+            } else {
+                // ii. "" 없으면 matching 페이지로.
+                console.log('ii. null not exists. redirecting to matching')
+                res.redirect(`${process.env.CLIENT_URL}/matching`)
+            }
+        })
     }
 );

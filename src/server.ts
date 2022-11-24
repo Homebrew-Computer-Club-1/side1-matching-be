@@ -8,7 +8,7 @@ import axios, {AxiosResponse} from 'axios';
 import {googleRouter} from './routes/google.js';
 import {youtubeRouter, updateYoutubeLikes, updateYoutubeSubscriptions} from './api/youtube_api.js';
 import passportConfig from './passport/index.js';
-import {connection} from './lib/mysql.js'
+import {connection, handleDisconnect} from './lib/mysql.js'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
 import { MysqlError } from 'mysql';
@@ -20,6 +20,7 @@ import {IPassport} from './sessionType';
 import { IuserDataOnBE, IyoutubeData } from './type/db_type.js';
 
 
+
 dotenv.config();
 
 passportConfig();
@@ -29,6 +30,7 @@ const app = express();
 export const db=connection;
 const mysqlStore = MySQLStore(expressSession);
 
+app.set("trust proxy", 1);
 const session_options = {
     host     : process.env.DB_HOST as string,
     user     : process.env.DB_USER as string,
@@ -42,8 +44,12 @@ app.use(session({
     secret: 'keyboard cat',
     resave: false,
     store: sessionStore,
-    saveUninitialized: true,
-    cookie: { secure: false }
+    saveUninitialized: false,
+    cookie: {
+        sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
+        secure: process.env.NODE_ENV === "production", // must be true if sameSite='none'
+        domain : process.env.CLIENT_ORIGIN,
+    }
 }));
 
 declare global {
@@ -66,13 +72,17 @@ app.use(bodyParser.json())
 
 app.use("/auth/google", googleRouter);
 app.use("/youtube", youtubeRouter);
-app.use(cors({ origin: `${process.env.CLIENT_URL}`}));
+app.use(cors({
+    credentials:true,
+    origin: process.env.CLIENT_URL
+}));
 
 app.get('/',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
 app.get('/login-check',function(req,res){
+console.log('<logged in check logic>')
     if (req.session.passport){
         res.send({loggedIn:true})
     } else {
@@ -124,21 +134,20 @@ app.get('/match', function(req,res){
 
     });
 });
+
 app.get('/logout',function(req,res){
-  req.logout(function(){
-    req.session.save(function(){
-        res.status(200);
-      })
-    }
-  );
-
-
+console.log('<logout logic>')
+    req.logout(function(){  
+        req.session.destroy(()=>{
+                // res.clearCookie('connect.sid');
+            res.status(200);
+        });
+    });
 })
 
 
 app.get('/get-google-id',function(req:express.Request, res:express.Response){
-    console.log('getgoogleid')
-        console.log(req.user?.id);
+    console.log('<get-google-id logic>',`req.user.id : ${req.user?.id}`)
         res.json({googleId: req.user?.id});
     // if(req.user != undefined){
 
@@ -146,13 +155,13 @@ app.get('/get-google-id',function(req:express.Request, res:express.Response){
 })
 
 app.post('/update-user-info', function(req,res){
-    console.log('updateuserinfo')
+    console.log('<updateuserinfo logic>')
+    console.log(`1. req.body : ${req.body}`)
     db.query(`UPDATE user_info SET name=?, age=? WHERE google_id=?`, [req.body.name, req.body.age, req.body.googleId], function (error, results, fields) {
         if (error){
-            throw error;
+            // throw error;
         }
-        console.log(req.body)
-        console.log('executed')
+        console.log(`2. UPDATE db finished. result : ${results[0]}`)
         res.send(true);
     });
 });

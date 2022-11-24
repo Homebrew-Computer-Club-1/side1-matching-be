@@ -41,7 +41,9 @@ export function updateYoutubeSubscriptions(user_id:string, user_token:string){
             let data:Array<SubscribedChannel> = response.data.items;
             // console.log(response.data.items);
             const channel_id_list: Array<string> = data.map(x=>x.snippet.resourceId.channelId);
+
             let result:Array<CustomSubscription> = [];
+
             let promises_list = [];
             for(const subscribed_channel_id of channel_id_list){
                 promises_list.push(
@@ -55,7 +57,9 @@ export function updateYoutubeSubscriptions(user_id:string, user_token:string){
                             Authorization: `Bearer ${user_token}`
                         }
                     }).then(function(response){
+
                         const filtered_result:CustomSubscription = filter_subscription(response.data.items[0]);
+
                         result.push(filtered_result);
                     })
                 );
@@ -107,7 +111,9 @@ export function updateYoutubeLikes(user_id:string, user_token:string){
                 Authorization: `Bearer ${user_token}`
             }
         }).then(function (response) {
+        
             // 데이터 저장 로직 구현 필요.
+            
             console.log("좋아요 데이터 저장 성공");
             resolve(true);
         }).catch(function (error) {

@@ -53,7 +53,7 @@ export function google(){
             {
                 clientID: process.env.CLIENT_ID,
                 clientSecret: process.env.CLIENT_SECRET,
-                callbackURL: `${process.env.SERVER_URL}/auth/google/callback`,
+                callbackURL: `${process.env.SERVER_URL}/api/auth/google/callback`,
             },
             function(accessToken, refreshToken, profile, done) {
                 // 1) 토큰, 유저 정보 가져오기

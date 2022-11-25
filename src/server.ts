@@ -4,24 +4,23 @@ import session from 'express-session'
 import * as expressSession from 'express-session';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import axios, {AxiosResponse} from 'axios';
 import {googleRouter} from './routes/google.js';
 import {youtubeRouter, updateYoutubeLikes, updateYoutubeSubscriptions} from './api/youtube_api.js';
 import passportConfig from './passport/index.js';
-import {connection, handleDisconnect} from './lib/mysql.js'
+import {connection} from './lib/mysql.js'
 import cors from "cors";
 import MySQLStore from 'express-mysql-session';
 import { MysqlError } from 'mysql';
 import { user_tokens, tokenExists, updateToken } from './passport/googleStrategy.js';
 import refresh from 'passport-oauth2-refresh';
-import { isNamedExportBindings } from 'typescript';
 
 import {IPassport} from './sessionType';
 import { IuserDataOnBE, IyoutubeData } from './type/db_type.js';
 
+import path from "path";
+const __dirname = path.resolve();
+dotenv.config({path : path.join(__dirname, '../.env')});
 
-
-dotenv.config();
 
 passportConfig();
 
@@ -42,13 +41,11 @@ const sessionStore = new mysqlStore(session_options);
 
 app.use(session({
     secret: 'keyboard cat',
-    resave: false,
+    resave: true,
     store: sessionStore,
     saveUninitialized: false,
     cookie: {
-        sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
-        secure: process.env.NODE_ENV === "production", // must be true if sameSite='none'
-        domain : process.env.CLIENT_ORIGIN,
+        httpOnly: true,
     }
 }));
 
@@ -70,18 +67,25 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json())
 
-app.use("/auth/google", googleRouter);
-app.use("/youtube", youtubeRouter);
+app.use(express.static(path.join(__dirname, '/build_be/build_fe')));
+
+
+
+app.use("/api",function(req,res,next){
+    console.log(`req.user : ${req.user?.id}`)
+    next();
+})
+
+app.use("/api/auth/google", googleRouter);
+app.use("/api/youtube", youtubeRouter);
 app.use(cors({
     credentials:true,
     origin: process.env.CLIENT_URL
 }));
 
-app.get('/',function(req:express.Request, res:express.Response){
-    res.send('home');
-});
 
-app.get('/login-check',function(req,res){
+
+app.get('/api/login-check',function(req,res){
 console.log('<logged in check logic>')
     if (req.session.passport){
         res.send({loggedIn:true})
@@ -90,7 +94,7 @@ console.log('<logged in check logic>')
     }
 })
 
-app.get('/get-all-user-datas',function(req,res){
+app.get('/api/get-all-user-datas',function(req,res){
     db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
         res.send(allUserDatas);
     })
@@ -101,7 +105,13 @@ interface ImatchPostData {
 
 }
 
-app.get('/match', function(req,res){
+
+
+interface ImlResult {
+    [key :TgoogleId] : TgoogleId[];
+}
+
+app.get('/api/match', function(req,res){
     db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
         if (error){
             throw error;
@@ -122,7 +132,10 @@ app.get('/match', function(req,res){
         // });
 
         // 임시 코드
-        db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : IuserDataOnBE[]){
+        db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : 
+        
+        
+        []){
             const result = allUserDatas.map(userData => {
                 return userData.google_id
             });
@@ -135,18 +148,18 @@ app.get('/match', function(req,res){
     });
 });
 
-app.get('/logout',function(req,res){
+app.get('/api/logout',function(req,res){
 console.log('<logout logic>')
     req.logout(function(){  
         req.session.destroy(()=>{
                 // res.clearCookie('connect.sid');
-            res.status(200);
+            res.sendStatus(200);
         });
     });
 })
 
 
-app.get('/get-google-id',function(req:express.Request, res:express.Response){
+app.get('/api/get-google-id',function(req:express.Request, res:express.Response){
     console.log('<get-google-id logic>',`req.user.id : ${req.user?.id}`)
         res.json({googleId: req.user?.id});
     // if(req.user != undefined){
@@ -154,7 +167,7 @@ app.get('/get-google-id',function(req:express.Request, res:express.Response){
     // }
 })
 
-app.post('/update-user-info', function(req,res){
+app.post('/api/update-user-info', function(req,res){
     console.log('<updateuserinfo logic>')
     console.log(`1. req.body : ${req.body}`)
     db.query(`UPDATE user_info SET name=?, age=? WHERE google_id=?`, [req.body.name, req.body.age, req.body.googleId], function (error, results, fields) {
@@ -167,7 +180,7 @@ app.post('/update-user-info', function(req,res){
 });
 
 
-app.get('/get-current-user-data',function(req,res){
+app.get('/api/get-current-user-data',function(req,res){
     console.log('getcurrentuserdata')
     db.query(`SELECT * FROM user_info WHERE google_id=?`,[req.user?.id],function(err,result){
         console.log(result[0])
@@ -175,7 +188,7 @@ app.get('/get-current-user-data',function(req,res){
     })
 });
 
-app.get('/update-tokens',function(req,res,next){
+app.get('/api/update-tokens',function(req,res,next){
     // DB에서 가져온 google_token의 데이터 형식
     interface RefreshTokenData{
         google_id:string,
@@ -226,7 +239,7 @@ app.get('/update-tokens',function(req,res,next){
     });
 });
 
-app.get('/update-youtube-data', async function(req,res){
+app.get('/api/update-youtube-data', async function(req,res){
     console.log(user_tokens);
     for (const token_data of user_tokens){
         console.log(token_data);
@@ -235,6 +248,14 @@ app.get('/update-youtube-data', async function(req,res){
         await updateYoutubeSubscriptions(id,token);
     }
     res.send('유튜브 데이터 갱신 성공');
+});
+
+app.get('/api',function(req:express.Request, res:express.Response){
+    res.send('home');
+});
+
+app.get('*', (req,res) =>{
+    res.sendFile(path.join(__dirname+'/build_be/build_fe/index.html'));
 });
 
 app.listen(port, function () {

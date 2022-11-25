@@ -15,9 +15,12 @@ import { user_tokens, tokenExists, updateToken } from './passport/googleStrategy
 import refresh from 'passport-oauth2-refresh';
 
 import {IPassport} from './sessionType';
+import { IuserDataOnBE, IyoutubeData } from './type/db_type.js';
+
 import path from "path";
 const __dirname = path.resolve();
 dotenv.config({path : path.join(__dirname, '../.env')});
+
 
 passportConfig();
 
@@ -97,24 +100,15 @@ app.get('/api/get-all-user-datas',function(req,res){
     })
 })
 
-type TgoogleId = string;
-
-interface IyoutubeData {
-    google_id: TgoogleId;
-    like_data: string,
-    subs_data: string
-}
+// 어떤 용도의 데이터인지 파악 x
 interface ImatchPostData {
 
 }
 
+
+
 interface ImlResult {
     [key :TgoogleId] : TgoogleId[];
-}
-interface IuserDataOnBE {
-    google_id:TgoogleId;
-    name:string;
-    age:number;
 }
 
 app.get('/api/match', function(req,res){
@@ -138,7 +132,10 @@ app.get('/api/match', function(req,res){
         // });
 
         // 임시 코드
-        db.query(`SELECT * FROM user_info`,function(err,allUserDatas : IuserDataOnBE[]){
+        db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : 
+        
+        
+        []){
             const result = allUserDatas.map(userData => {
                 return userData.google_id
             });

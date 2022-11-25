@@ -4,14 +4,11 @@ import passport from "passport";
 import Google from "passport-google-oauth20";
 import {db} from "../server.js";
 import refresh from 'passport-oauth2-refresh';
+import { TokenData } from "../type/server_type.js";
+
 const GoogleStrategy = Google.Strategy;
 
 dotenv.config();
-
-interface TokenData{
-    id:string,
-    access_token:string
-}
 
 export let user_tokens:TokenData[];
 user_tokens=[];
@@ -99,7 +96,7 @@ export function google(){
                         }
                     })
             }
-        )
+        );
         passport.use(google_strategy);
         refresh.use(google_strategy);
     }

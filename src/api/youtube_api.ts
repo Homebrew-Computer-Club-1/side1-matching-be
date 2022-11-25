@@ -3,40 +3,21 @@ import express from "express";
 import { checkToken, user_tokens } from '../passport/googleStrategy.js';
 import axios from 'axios';
 import {db} from '../server.js';
+import { SubscribedChannel } from '../type/youtube_type.js';
+import { CustomSubscription } from '../type/server_type.js';
 
 export const youtubeRouter: Router = Router();
 
 // 원본 데이터 형식
 // any인 부분은 사용하지 않거나, 세부적인 내용 필요 없어서 구체화 X
-interface SubscribedChannel{
-    kind:String,
-    etag:String,
-    id:String,
-    snippet:{
-        publishedAt:String,
-        title:String,
-        description:String,
-        resourceId:{
-            kind: string,
-            channelId: string,
-        },
-        channelId:String,
-        thumbnails:any
-    },
-    topicDetails:{
-        topicIds:String[],
-        topicCategories:String[]
-    }
-}
+
 
 // 가공된 데이터 형식
-interface Subscription{
-    topicIds:String[]
-}
+
 
 // Youtube API 구독 데이터를 가공하는 함수
 function filter_subscription(data:SubscribedChannel){
-    const result:Subscription = {
+    const result:CustomSubscription = {
         topicIds: data.topicDetails?.topicIds // 여기 data.topicDetails가 undefined 로 뜰떄도 있어 수정함.
     };
 
@@ -60,7 +41,9 @@ export function updateYoutubeSubscriptions(user_id:string, user_token:string){
             let data:Array<SubscribedChannel> = response.data.items;
             // console.log(response.data.items);
             const channel_id_list: Array<string> = data.map(x=>x.snippet.resourceId.channelId);
-            let result:Array<Subscription> = [];
+
+            let result:Array<CustomSubscription> = [];
+
             let promises_list = [];
             for(const subscribed_channel_id of channel_id_list){
                 promises_list.push(
@@ -74,7 +57,9 @@ export function updateYoutubeSubscriptions(user_id:string, user_token:string){
                             Authorization: `Bearer ${user_token}`
                         }
                     }).then(function(response){
-                        const filtered_result = filter_subscription(response.data.items[0]);
+
+                        const filtered_result:CustomSubscription = filter_subscription(response.data.items[0]);
+
                         result.push(filtered_result);
                     })
                 );
@@ -126,6 +111,9 @@ export function updateYoutubeLikes(user_id:string, user_token:string){
                 Authorization: `Bearer ${user_token}`
             }
         }).then(function (response) {
+        
+            // 데이터 저장 로직 구현 필요.
+            
             console.log("좋아요 데이터 저장 성공");
             resolve(true);
         }).catch(function (error) {

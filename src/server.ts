@@ -156,7 +156,7 @@ console.log('<logout logic>')
     req.logout(function(){  
         req.session.destroy(()=>{
                 // res.clearCookie('connect.sid');
-            res.status(200);
+            res.sendStatus(200);
         });
     });
 })

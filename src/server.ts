@@ -105,8 +105,6 @@ interface ImatchPostData {
 
 }
 
-
-
 // interface ImlResult {
 //     [key :TgoogleId] : TgoogleId[];
 // }
@@ -133,6 +131,7 @@ app.get('/api/match', function(req,res){
 
         // 임시 코드
         db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : IuserDataOnBE[]){
+
             const result = allUserDatas.map(userData => {
                 return userData.google_id
             });

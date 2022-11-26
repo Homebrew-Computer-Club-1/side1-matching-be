@@ -9,7 +9,3 @@ export interface TokenData{
 export interface CustomSubscription{
     topicIds:string[]
 }
-
-interface ImlResult {
-    [key :TgoogleId] : TgoogleId[];
-}

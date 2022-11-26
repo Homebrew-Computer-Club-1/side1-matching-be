@@ -16,6 +16,7 @@ import refresh from 'passport-oauth2-refresh';
 
 import {IPassport} from './sessionType';
 import { IuserDataOnBE, IyoutubeData } from './type/db_type.js';
+import { CustomSubscription } from './type/server_type.js';
 
 import path from "path";
 const __dirname = path.resolve();
@@ -244,6 +245,29 @@ app.get('/api/update-youtube-data', async function(req,res){
         await updateYoutubeSubscriptions(id,token);
     }
     res.send('유튜브 데이터 갱신 성공');
+});
+
+app.get('/api/get-youtube-data', function(req,res){
+    db.query(`SELECT * FROM youtube_data`,async function(err:MysqlError, result:IyoutubeData[]){
+        if(err) throw err;
+        let total_result : (string[])[]= [];
+        total_result.push();
+        result.map(x=>{
+            const subs_data:CustomSubscription[] = JSON.parse(x.subs_data);
+            let cur_array:string[] = [];
+            let subs_count = 0;
+            cur_array.push(x.google_id);
+            subs_data.map(y=>{
+                cur_array.push(...(y.topicIds));
+                subs_count++;
+            })
+            cur_array.splice(1,0,subs_count.toString());
+            console.log("cur_array: ",cur_array);
+            total_result.push(cur_array);
+        });
+        console.log(total_result);
+    });
+    res.status(200);
 });
 
 app.get('/api',function(req:express.Request, res:express.Response){

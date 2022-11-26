@@ -19,9 +19,10 @@ googleRouter.get('/callback',
     function(req, res) {
         // <redirection to FE logic>
         console.log('<redirection to FE logic>')
+        console.log(req.user);
         // 1. userInfo (name,age) 중 null 있는지 확인
         console.log('1. checking null on db - user_info - userInfo')
-        db.query(`select EXISTS (SELECT google_id FROM user_info WHERE google_id=? AND (name IS NULL OR age IS NULL) limit 1) as success`,[req.user?.id],function (err,result){
+        db.query(`select EXISTS (SELECT google_id FROM user_info WHERE google_id=? AND (name IS NULL OR age IS NULL) limit 1) as success`, [req.user?.id], function (err,result){
             if (result[0].success === 1){
                 // i. null 인게 있으면 [ if google_id = req.user.id && (name || age = NULL) 일 경우] , userInfo 입력 페이지로 이동
                 console.log('i. null exists. redirecting to inputUserInfo')

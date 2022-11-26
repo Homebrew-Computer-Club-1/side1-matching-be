@@ -93,6 +93,7 @@ export function google(){
                             // 완료
                             console.log('complete')
                             done(null,profile)
+                            // done(null,{profile:profile,already:true} as any)
                         }
                     })
             }

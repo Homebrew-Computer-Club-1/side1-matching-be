@@ -73,7 +73,7 @@ export function google(){
                             console.log('i. not registered user')
                             // ((1)) 회원가입 (user_info에 google_id,null,null 삽입)
                             console.log('((1)) inserting googleId into db - user_info')
-                            db.query(`INSERT INTO user_info VALUES(?,DEFAULT,DEFAULT)`,[user_id], function (error, results, fields) {
+                            db.query(`INSERT INTO user_info (google_id) VALUES(?)`,[user_id], function (error, results, fields) {
                                 if (error)
                                     throw error;
                                 // ((2)) refresh token 삽입 (google_token에 refresh_token 삽입)

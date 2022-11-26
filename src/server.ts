@@ -166,13 +166,24 @@ app.get('/api/get-google-id',function(req:express.Request, res:express.Response)
 
 app.post('/api/update-user-info', function(req,res){
     console.log('<updateuserinfo logic>')
-    console.log(`1. req.body : ${req.body}`)
-    db.query(`UPDATE user_info SET name=?, age=? WHERE google_id=?`, [req.body.name, req.body.age, req.body.googleId], function (error, results, fields) {
+    console.log(`1. req.body : ${JSON.stringify(req.body)}`)
+        function reqBodyToQuery(reqBody : any){
+            const reqBody_ = deleteGoogleId(reqBody);
+            const keys = Object.keys(reqBody_);
+            const query = String(keys.map(key => `${key}=?`))
+            return query
+        }
+            function deleteGoogleId(reqBody : any){
+                const newReqBody = {...reqBody}
+                delete newReqBody.googleId
+                return newReqBody;
+            }
+    db.query(`UPDATE user_info SET ${reqBodyToQuery(req.body)} WHERE google_id=?`, [...Object.values(deleteGoogleId(req.body)), req.body.googleId], function (error, results, fields) {
         if (error){
             // throw error;
         }
-        console.log(`2. UPDATE db finished. result : ${results[0]}`)
-        res.send(true);
+        console.log(`2. UPDATE db finished. result : ${JSON.stringify(results)}`)
+        res.sendStatus(200);
     });
 });
 

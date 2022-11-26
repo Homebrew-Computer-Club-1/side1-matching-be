@@ -128,6 +128,6 @@ async function saveYoutubeData(req:express.Request, res:express.Response, next:e
 }
 
 youtubeRouter.get('/save-youtube-data', checkToken, saveYoutubeData, function(req:express.Request,res:express.Response){
-    res.send("DB: 유튜브 데이터 저장 성공");
+    res.sendStatus(200);
 });
 

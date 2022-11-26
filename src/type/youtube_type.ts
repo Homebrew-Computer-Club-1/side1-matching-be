@@ -2,22 +2,22 @@
 // any인 부분은 사용하지 않거나, 세부적인 내용 필요 없어서 구체화 X
 
 export interface SubscribedChannel{
-    kind:String,
-    etag:String,
-    id:String,
+    kind:string,
+    etag:string,
+    id:string,
     snippet:{
-        publishedAt:String,
-        title:String,
-        description:String,
+        publishedAt:string,
+        title:string,
+        description:string,
         resourceId:{
             kind: string,
             channelId: string,
         },
-        channelId:String,
+        channelId:string,
         thumbnails:any
     },
     topicDetails:{
-        topicIds:String[],
-        topicCategories:String[]
+        topicIds:string[],
+        topicCategories:string[]
     }
 }

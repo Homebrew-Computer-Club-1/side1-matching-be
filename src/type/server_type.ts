@@ -7,7 +7,7 @@ export interface TokenData{
 
 // 가공한 youtube data type
 export interface CustomSubscription{
-    topicIds:String[]
+    topicIds:string[]
 }
 
 interface ImlResult {

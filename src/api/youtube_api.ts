@@ -79,21 +79,21 @@ export function updateYoutubeSubscriptions(user_id:string, user_token:string){
                         Authorization: `Bearer ${user_token}`
                     }
                 }).then(function(response){
-
-                    const filtered_result:CustomSubscription = filter_subscription(response.data.items[0]);
-
-                    result.push(filtered_result);
+                    if(response.data!=undefined){
+                        const filtered_result:CustomSubscription = filter_subscription(response.data.items[0]);
+                        if(filtered_result.topicIds!=undefined)
+                            result.push(filtered_result);
+                    }
                 })
             );
         }
-
         // 모든 추가된 Promise들 실행
         // 실제로 youtube data를 불러오는 단계
         Promise.all(channel_promise_list).then(() =>{
                 db.query(`select EXISTS (select google_id from youtube_data where google_id=? limit 1) as success`,[user_id], function (error, results, fields) {
                     if (error)
                         throw error;
-
+                    // console.log(result);
                     // youtube_data 테이블에 해당 사용자 데이터 없을 시,
                     if(results[0].success==0){
                         db.query(`INSERT INTO youtube_data VALUES(?,DEFAULT,?)`,[user_id,JSON.stringify(result)], function (error, results, fields) {

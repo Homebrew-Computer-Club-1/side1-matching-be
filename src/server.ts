@@ -261,13 +261,16 @@ app.get('/api/match', function(req,res){
     db.query(`SELECT * FROM youtube_data`,async function(err:MysqlError, result:IyoutubeData[]){
         if(err) throw err;
         let total_result : (string[])[]= [];
-        total_result.push();
+        // total_result.push();
         result.map(x=>{
             const subs_data:CustomSubscription[] = JSON.parse(x.subs_data);
             let cur_array:string[] = [];
             let subs_count = 0;
             cur_array.push(x.google_id);
+            console.log("subscription data : \n",subs_data);
             subs_data.map(y=>{
+                // console.log(y);
+                if(y.topicIds==undefined) console.log("undefined topicIds : ",y);
                 cur_array.push(...(y.topicIds));
                 subs_count++;
             })
@@ -286,9 +289,9 @@ app.get('/api',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
-app.get('*', (req,res) =>{
-    res.sendFile(path.join(__dirname+'/build_be/build_fe/index.html'));
-});
+// app.get('*', (req,res) =>{
+//     res.sendFile(path.join(__dirname+'/build_be/build_fe/index.html'));
+// });
 
 app.listen(port, function () {
     console.log(`listening to ${port}`);

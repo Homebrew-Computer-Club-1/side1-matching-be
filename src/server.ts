@@ -204,7 +204,7 @@ app.get('/api/update-tokens',function(req,res,next){
 
     // 비동기적 콜백 실행을 위한 함수
     function promiseNewAccessToken(token_data:RefreshTokenData){
-        const error_msg = "";
+        const error_msg = "access token is undefined";
         return new Promise((resolve, reject)=>{
             refresh.requestNewAccessToken(
                 'google',

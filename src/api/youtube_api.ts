@@ -18,75 +18,102 @@ function filter_subscription(data:SubscribedChannel){
 }
 
 export function updateYoutubeSubscriptions(user_id:string, user_token:string){
-    return new Promise((resolve,reject)=>{
-        console.log(user_token);
-        axios.get('https://www.googleapis.com/youtube/v3/subscriptions', {
-            params: {
-                part: 'snippet',
-                mine: true,
-                // 최대 50개까지 가능하므로, 추후 더 필요하다면 계속 요청하는 방식으로 불러오기 필요.
-                maxResults: 25
-            },
-            headers: {
-                Authorization: `Bearer ${user_token}`
-            }
-        }).then(function (response) {
-            let data:Array<SubscribedChannel> = response.data.items;
-            // console.log(response.data.items);
-            const channel_id_list: Array<string> = data.map(x=>x.snippet.resourceId.channelId);
+    return new Promise(async(resolve,reject)=>{
+        // nextPageToken 데이터 있으면 = 다음 데이터가 있다는 의미(다음 페이지를 요청해야 한다.)
+        // nextPageToken 존재를 확인하며 불러오기 반복
+        let is_nextpage_exist:boolean = true;
+        let next_page_token:string|undefined = undefined;
+        let channel_id_list:Array<string> = [];
+        let channel_promise_list = [];
+        let result:Array<CustomSubscription> = [];
 
-            let result:Array<CustomSubscription> = [];
-
-            let promises_list = [];
-            for(const subscribed_channel_id of channel_id_list){
-                promises_list.push(
-                    axios.get("https://www.googleapis.com/youtube/v3/channels",{
-                        params: {
-                            part: 'topicDetails',
-                            maxResults: 1,
-                            id: subscribed_channel_id
-                        },
-                        headers: {
-                            Authorization: `Bearer ${user_token}`
-                        }
-                    }).then(function(response){
-
-                        const filtered_result:CustomSubscription = filter_subscription(response.data.items[0]);
-
-                        result.push(filtered_result);
-                    })
-                );
-            }
-            Promise.all(promises_list).then(() =>{
-                    db.query(`select EXISTS (select google_id from youtube_data where google_id=? limit 1) as success`,[user_id], function (error, results, fields) {
-                        if (error)
-                            throw error;
-
-                        // console.log(results);
-
-                        // youtube_data 테이블에 해당 사용자 데이터 없을 시,
-                        if(results[0].success==0){
-                            db.query(`INSERT INTO youtube_data VALUES(?,DEFAULT,?)`,[user_id,JSON.stringify(result)], function (error, results, fields) {
-                                if (error)
-                                    throw error;
-                            });
-                            
-                        // youtube_data 테이블에 해당 사용자 데이터 존재 시,
-                        }else{
-                            db.query(`UPDATE youtube_data SET subs_data=? WHERE google_id=?`,[JSON.stringify(result), user_id], function (error, results, fields) {
-                                if (error)
-                                    throw error;
-                            });
-                        }
-                    });
-                    console.log("구독 데이터 저장 성공");
-                    resolve(true);
+        // nextPageToken 있으면 계속 불러오기
+        while (is_nextpage_exist){
+            let request_config = {
+                params: {
+                    part: 'snippet',
+                    mine: true,
+                    maxResults: 50,
+                    pageToken: null
+                },
+                headers: {
+                    Authorization: `Bearer ${user_token}`
                 }
-            ).catch(function(error){
-                reject(error);
+            };
+
+            // 요청 조건에 pageToken 데이터로 nextPageToken 입력
+            if(next_page_token!=undefined){
+                request_config.params.pageToken = next_page_token;
+            }
+
+            // youtube data 요청
+            await axios.get('https://www.googleapis.com/youtube/v3/subscriptions', request_config)
+            .then(function(response){
+                // console.log('response data : ',response.data);
+                if(response.data.nextPageToken != undefined){
+                    // nextPageToken 있으면, next_page_token 업데이트
+                    next_page_token=response.data.nextPageToken;
+                    console.log('Next page token: ',response.data.nextPageToken);
+                }else{
+                    // nextPageToken 없으면, while 조건 탈출
+                    console.log('No next page token.');
+                    is_nextpage_exist = false;
+                }
+                const data:Array<SubscribedChannel> = response.data.items;
+                channel_id_list.push(...data.map(x=>x.snippet.resourceId.channelId));
             });
-        }).catch(function (error) {
-            return error;
+        }
+
+        // 모든 구독 정보에서 채널 ID를 순환하며 채널 데이터 불러오는 Promise 추가
+        // 이후 Promise들 모두 실행할 것.
+        // * 구독 데이터에는 채널 정보가 부족(카테고리 데이터)
+        for(const subscribed_channel_id of channel_id_list){
+            channel_promise_list.push(
+                axios.get("https://www.googleapis.com/youtube/v3/channels",{
+                    params: {
+                        part: 'topicDetails',
+                        maxResults: 1,
+                        id: subscribed_channel_id
+                    },
+                    headers: {
+                        Authorization: `Bearer ${user_token}`
+                    }
+                }).then(function(response){
+
+                    const filtered_result:CustomSubscription = filter_subscription(response.data.items[0]);
+
+                    result.push(filtered_result);
+                })
+            );
+        }
+
+        // 모든 추가된 Promise들 실행
+        // 실제로 youtube data를 불러오는 단계
+        Promise.all(channel_promise_list).then(() =>{
+                db.query(`select EXISTS (select google_id from youtube_data where google_id=? limit 1) as success`,[user_id], function (error, results, fields) {
+                    if (error)
+                        throw error;
+
+                    // youtube_data 테이블에 해당 사용자 데이터 없을 시,
+                    if(results[0].success==0){
+                        db.query(`INSERT INTO youtube_data VALUES(?,DEFAULT,?)`,[user_id,JSON.stringify(result)], function (error, results, fields) {
+                            if (error)
+                                throw error;
+                        });
+                        
+                    // youtube_data 테이블에 해당 사용자 데이터 존재 시,
+                    }else{
+                        db.query(`UPDATE youtube_data SET subs_data=? WHERE google_id=?`,[JSON.stringify(result), user_id], function (error, results, fields) {
+                            if (error)
+                                throw error;
+                        });
+                    }
+                });
+                console.log("구독 데이터 저장 성공");
+                resolve(true);
+            }
+        ).catch(function(error){
+            reject(error);
         });
     });
 }

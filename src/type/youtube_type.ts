@@ -20,3 +20,7 @@ export interface SubscribedChannel{
         topicCategories:string[]
     }
 }
+
+export interface youtubeMlResult {
+    
+}

@@ -19,6 +19,8 @@ import { IuserDataOnBE, IyoutubeData } from './type/db_type.js';
 import { CustomSubscription } from './type/server_type.js';
 
 import path from "path";
+import axios from 'axios';
+import { youtubeMlResult } from './type/youtube_type.js';
 const __dirname = path.resolve();
 dotenv.config({path : path.join(__dirname, '../.env')});
 
@@ -102,48 +104,45 @@ app.get('/api/get-all-user-datas',function(req,res){
 })
 
 // 어떤 용도의 데이터인지 파악 x
-interface ImatchPostData {
-
-}
 
 // interface ImlResult {
 //     [key :TgoogleId] : TgoogleId[];
 // }
 
-app.get('/api/match', function(req,res){
-    db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
-        if (error){
-            throw error;
-        }
-        // 1. youtube 데이터 ML 서버 전송전 전처리
-        const sendList = allYoutubeDatas.map(x => { 
-            return {
-                google_id : x.google_id,
-                like_data: x.like_data,
-                subs_data: JSON.parse(x.subs_data)
-            };
-        });
-        // 2. ML 서버로 데이터 전송 => 매칭 결과 받아서 FE로 전송
+// app.get('/api/match', function(req,res){
+//     db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
+//         if (error){
+//             throw error;
+//         }
+//         // 1. youtube 데이터 ML 서버 전송전 전처리
+//         const sendList = allYoutubeDatas.map(x => { 
+//             return {
+//                 google_id : x.google_id,
+//                 like_data: x.like_data,
+//                 subs_data: JSON.parse(x.subs_data)
+//             };
+//         });
+//         // 2. ML 서버로 데이터 전송 => 매칭 결과 받아서 FE로 전송
 
-        // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
-        // .then(response => {
-        //     const mlResult : ImlResult = response.data;
-        // });
+//         // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
+//         // .then(response => {
+//         //     const mlResult : ImlResult = response.data;
+//         // });
 
-        // 임시 코드
-        db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : IuserDataOnBE[]){
+//         // 임시 코드
+//         db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : IuserDataOnBE[]){
 
-            const result = allUserDatas.map(userData => {
-                return userData.google_id
-            });
-            function shuffle(array : string[]) {
-                return array.sort(() => Math.random() - 0.5);
-            }
-            res.send(shuffle(result));
-        })
+//             const result = allUserDatas.map(userData => {
+//                 return userData.google_id
+//             });
+//             function shuffle(array : string[]) {
+//                 return array.sort(() => Math.random() - 0.5);
+//             }
+//             res.send(shuffle(result));
+//         })
 
-    });
-});
+//     });
+// });
 
 app.get('/api/logout',function(req,res){
 console.log('<logout logic>')
@@ -258,7 +257,7 @@ app.get('/api/update-youtube-data', async function(req,res){
     res.send('유튜브 데이터 갱신 성공');
 });
 
-app.get('/api/get-youtube-data', function(req,res){
+app.get('/api/match', function(req,res){
     db.query(`SELECT * FROM youtube_data`,async function(err:MysqlError, result:IyoutubeData[]){
         if(err) throw err;
         let total_result : (string[])[]= [];
@@ -273,10 +272,12 @@ app.get('/api/get-youtube-data', function(req,res){
                 subs_count++;
             })
             cur_array.splice(1,0,subs_count.toString());
-            console.log("cur_array: ",cur_array);
             total_result.push(cur_array);
         });
-        console.log(total_result);
+        axios.post(`${process.env.ML_URL}/result/matching`, total_result)
+            .then(response => {
+                const mlResult : youtubeMlResult = response.data;
+            });
     });
     res.status(200);
 });

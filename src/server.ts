@@ -21,6 +21,8 @@ import { CustomSubscription } from './type/server_type.js';
 import path from "path";
 import axios from 'axios';
 import { youtubeMlResult } from './type/youtube_type.js';
+import request from 'request';
+
 const __dirname = path.resolve();
 dotenv.config({path : path.join(__dirname, '../.env')});
 
@@ -75,7 +77,7 @@ app.use(express.static(path.join(__dirname, '/build_be/build_fe')));
 
 
 app.use("/api",function(req,res,next){
-    console.log(`req.user : ${req.user?.id}`)
+    console.log(`req.user.id : ${req.user?.id}`)
     next();
 })
 
@@ -277,21 +279,22 @@ app.get('/api/match', function(req,res){
             cur_array.splice(1,0,subs_count.toString());
             total_result.push(cur_array);
         });
-        axios.post(`${process.env.ML_URL}/result/matching`, total_result)
+        axios.post(`${process.env.ML_URL}/ml/match`, {youtubeSubscriptionData : total_result})
             .then(response => {
-                const mlResult : youtubeMlResult = response.data;
+                const mlResult : string[] = response.data;
+                console.log('sendData :',mlResult[req.user?.id as any])
+                res.send(mlResult[req.user?.id as any])
             });
     });
-    res.status(200);
 });
 
 app.get('/api',function(req:express.Request, res:express.Response){
     res.send('home');
 });
 
-// app.get('*', (req,res) =>{
-//     res.sendFile(path.join(__dirname+'/build_be/build_fe/index.html'));
-// });
+app.get('*', (req,res) =>{
+    res.sendFile(path.join(__dirname+'/build_be/build_fe/index.html'));
+});
 
 app.listen(port, function () {
     console.log(`listening to ${port}`);

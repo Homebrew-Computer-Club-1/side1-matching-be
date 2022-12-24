@@ -5,6 +5,7 @@ import * as expressSession from 'express-session';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import {googleRouter} from './routes/google.js';
+import {authRouter} from './routes/auth.js';
 import {youtubeRouter, updateYoutubeLikes, updateYoutubeSubscriptions} from './api/youtube_api.js';
 import passportConfig from './passport/index.js';
 import {connection} from './lib/mysql.js'
@@ -83,6 +84,8 @@ app.use("/api",function(req,res,next){
 
 app.use("/api/auth/google", googleRouter);
 app.use("/api/youtube", youtubeRouter);
+app.use("/api/auth", authRouter);
+
 app.use(cors({
     credentials:true,
     origin: process.env.CLIENT_URL
@@ -90,14 +93,14 @@ app.use(cors({
 
 
 
-app.get('/api/login-check',function(req,res){
-console.log('<logged in check logic>')
-    if (req.session.passport){
-        res.send({loggedIn:true})
-    } else {
-        res.send({loggedIn:false})
-    }
-})
+// app.get('/api/login-check',function(req,res){
+// console.log('<logged in check logic>')
+//     if (req.session.passport){
+//         res.send({loggedIn:true})
+//     } else {
+//         res.send({loggedIn:false})
+//     }
+// })
 
 app.get('/api/get-all-user-datas',function(req,res){
     db.query(`SELECT * FROM user_info`,function(err,allUserDatas){
@@ -105,52 +108,10 @@ app.get('/api/get-all-user-datas',function(req,res){
     })
 })
 
-// 어떤 용도의 데이터인지 파악 x
-
-// interface ImlResult {
-//     [key :TgoogleId] : TgoogleId[];
-// }
-
-// app.get('/api/match', function(req,res){
-//     db.query(`SELECT * FROM youtube_data`, function (error: MysqlError|undefined, allYoutubeDatas:IyoutubeData[], fields: any) {
-//         if (error){
-//             throw error;
-//         }
-//         // 1. youtube 데이터 ML 서버 전송전 전처리
-//         const sendList = allYoutubeDatas.map(x => { 
-//             return {
-//                 google_id : x.google_id,
-//                 like_data: x.like_data,
-//                 subs_data: JSON.parse(x.subs_data)
-//             };
-//         });
-//         // 2. ML 서버로 데이터 전송 => 매칭 결과 받아서 FE로 전송
-
-//         // axios.post(`${process.env.ML_URL}/result/matching`, sendData)
-//         // .then(response => {
-//         //     const mlResult : ImlResult = response.data;
-//         // });
-
-//         // 임시 코드
-//         db.query(`SELECT * FROM user_info`,function(err: MysqlError|undefined,allUserDatas : IuserDataOnBE[]){
-
-//             const result = allUserDatas.map(userData => {
-//                 return userData.google_id
-//             });
-//             function shuffle(array : string[]) {
-//                 return array.sort(() => Math.random() - 0.5);
-//             }
-//             res.send(shuffle(result));
-//         })
-
-//     });
-// });
-
 app.get('/api/logout',function(req,res){
 console.log('<logout logic>')
     req.logout(function(){  
         req.session.destroy(()=>{
-                // res.clearCookie('connect.sid');
             res.sendStatus(200);
         });
     });
